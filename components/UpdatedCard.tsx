@@ -8,6 +8,7 @@ import { useInView } from '@/hooks/useInView';
 import { useSvgAnalysis } from '@/hooks/useSvgAnalysis';
 import type { PrSvgChange } from '@/types/diff';
 import { getFilenameFromPath } from '@/utils/analyzeSvg';
+import { formatBytes } from '@/utils/formatBytes';
 import { formatChangedPercent } from '@/utils/pixelDiff';
 import { isPassing } from '@/utils/qualityChecks';
 
@@ -121,11 +122,16 @@ export default function UpdatedCard({ change, thumbSize, error, onVisible, onRet
             ) : (
               <span className="text-muted-foreground">…</span>
             )}
-            {delta !== null && (
-              <span className={delta < 0 ? 'text-success' : delta > 0 ? 'text-destructive' : 'text-muted-foreground'}>
-                {formatByteDelta(delta)}
-              </span>
-            )}
+          </p>
+        )}
+        {change.before !== null && change.after !== null && delta !== null && (
+          <p className="flex flex-wrap items-baseline gap-x-2 font-mono text-xs tabular-nums">
+            <span className="text-muted-foreground">
+              {formatBytes(byteSize(change.before))} → {formatBytes(byteSize(change.after))}
+            </span>
+            <span className={delta < 0 ? 'text-success' : delta > 0 ? 'text-destructive' : 'text-muted-foreground'}>
+              {formatByteDelta(delta)}
+            </span>
           </p>
         )}
         {newlyFailing.length > 0 && (
