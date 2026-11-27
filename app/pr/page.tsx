@@ -25,7 +25,6 @@ const LOW_RATE_LIMIT = 10;
 // Stable empty list, so a hidden section doesn't change the memo dependencies every render
 const NONE: PrSvgChange[] = [];
 
-/** What an empty tab says: the whole PR has none of that kind */
 const EMPTY_MESSAGE: Record<PrCase, string> = {
   all: 'No added or updated SVG files in this pull request.',
   added: 'No added SVG files in this pull request.',
@@ -58,8 +57,7 @@ export default function PrReviewPage() {
   const [sort, setSort] = useState<PrSort>('path');
   const [thumbSize, setThumbSize] = useLocalStorage<number>('prThumbSize', 32);
   const [tokenInputOpen, setTokenInputOpen] = useState(false);
-  // Problems with what was entered (not a PR link, an issue, a PR that doesn't exist). Shown once,
-  // under the input; load failures that may pass on retry go to the error box instead. Never both
+  // Shown under the input; never together with the error box
   const [inputError, setInputError] = useState<string | null>(null);
   const pr = usePullRequest(prRef);
 
@@ -87,8 +85,7 @@ export default function PrReviewPage() {
     }
   }, [rejectInput]);
 
-  // Some input problems only GitHub can spot (owner/repo#1234 is an issue, or there's no such PR):
-  // they move under the input like an invalid link would
+  // Input problems only GitHub can spot, e.g. owner/repo#1234 is an issue
   useEffect(() => {
     if (pr.inputError) rejectInput(pr.inputError);
   }, [pr.inputError, rejectInput]);

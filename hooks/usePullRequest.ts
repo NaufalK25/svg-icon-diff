@@ -20,9 +20,9 @@ export interface PullRequestState {
   otherCount: number;
   truncated: boolean;
   loading: boolean;
-  /** Loading failed in a way that trying again may fix (rate limit, network, server) */
+  /** Retrying may fix it */
   error: string | null;
-  /** The PR can't be reviewed as entered (an issue, or no such PR): a problem with the input */
+  /** Retrying won't help: an issue, or no such PR */
   inputError: string | null;
   /** Per-path download errors */
   fileErrors: Record<string, string>;

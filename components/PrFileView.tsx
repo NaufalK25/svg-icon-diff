@@ -150,8 +150,9 @@ export default function PrFileView({
       <div className="flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-2 sm:px-6">
         {change && (
           <span
-            className={`${CHIP} ${change.kind === 'added' ? 'bg-success-soft text-success' : 'bg-plate-a-soft text-plate-a'
-              }`}
+            className={`${CHIP} ${
+              change.kind === 'added' ? 'bg-success-soft text-success' : 'bg-plate-a-soft text-plate-a'
+            }`}
           >
             {change.kind === 'added' ? 'Added' : 'Updated'}
           </span>

@@ -183,28 +183,28 @@ export default function CodeDiff({ a, b, labels }: CodeDiffProps) {
             <tbody>
               {view === 'unified'
                 ? foldContext(diff.lines, l => l.type === 'context', expanded).map((row, i) =>
-                  isFold(row) ? (
-                    foldRow(row, 4)
-                  ) : (
-                    <tr key={i}>
-                      {numCell(row.oldNo)}
-                      {numCell(row.newNo)}
-                      {codeCell(row)}
-                    </tr>
-                  ),
-                )
+                    isFold(row) ? (
+                      foldRow(row, 4)
+                    ) : (
+                      <tr key={i}>
+                        {numCell(row.oldNo)}
+                        {numCell(row.newNo)}
+                        {codeCell(row)}
+                      </tr>
+                    ),
+                  )
                 : foldContext(diff.rows, r => r.left?.type === 'context', expanded).map((row, i) =>
-                  isFold(row) ? (
-                    foldRow(row, 6)
-                  ) : (
-                    <tr key={i}>
-                      {numCell(row.left?.oldNo)}
-                      {codeCell(row.left)}
-                      {numCell(row.right?.newNo)}
-                      {codeCell(row.right)}
-                    </tr>
-                  ),
-                )}
+                    isFold(row) ? (
+                      foldRow(row, 6)
+                    ) : (
+                      <tr key={i}>
+                        {numCell(row.left?.oldNo)}
+                        {codeCell(row.left)}
+                        {numCell(row.right?.newNo)}
+                        {codeCell(row.right)}
+                      </tr>
+                    ),
+                  )}
             </tbody>
           </table>
         </div>

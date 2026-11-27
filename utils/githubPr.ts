@@ -40,18 +40,11 @@ export const notAPullRequest = ({ owner, repo, number }: PrRef) =>
 
 const FORMATS = 'Use https://github.com/owner/repo/pull/1234 or owner/repo#1234.';
 
-/**
- * The one wording for input problems, whether found before asking GitHub (an issue link, text
- * that isn't a PR) or by GitHub (a short-form number that turns out to be an issue)
- */
 export function prInputError(issue: PrRef | null): string {
   return `${issue ? notAPullRequest(issue) : 'Not a pull request URL.'} ${FORMATS}`;
 }
 
-/**
- * The PR asked for can't be reviewed as entered (an issue, or no such PR): trying again won't
- * help, so the page shows it under the input instead of in the error box
- */
+/** Retrying won't help, so the page shows it under the input */
 export class PrInputError extends Error {}
 
 export function prUrl({ owner, repo, number }: PrRef): string {
@@ -145,7 +138,6 @@ export async function fetchPullRequest(
         (e: unknown) => (e instanceof Error && e.message.startsWith('GitHub 404') ? 'missing' : null),
       );
       if (issue && issue !== 'missing' && !issue.pull_request) throw new PrInputError(prInputError(ref));
-      // Neither a PR nor an issue: the repository or the number is wrong (or the repo is private)
       if (issue === 'missing') {
         const hint = token ? '' : ' A private repository needs a token.';
         throw new PrInputError(

@@ -43,8 +43,9 @@ export default function PrUrlInput({ value, onChange, onSubmit, onInvalid, error
             aria-label="Pull request URL"
             aria-invalid={!!error}
             aria-describedby={error ? 'pr-url-error' : undefined}
-            className={`h-11 w-full rounded-sm border bg-card pl-9 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground ${error ? 'border-destructive' : 'border-input'
-              }`}
+            className={`h-11 w-full rounded-sm border bg-card pl-9 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground ${
+              error ? 'border-destructive' : 'border-input'
+            }`}
           />
         </div>
         <button type="submit" disabled={!value.trim() || loading} className={`${BUTTON_PRIMARY} h-11 px-5 text-base`}>

@@ -75,8 +75,9 @@ export default function PasteDialog({ onAdd, onClose }: PasteDialogProps) {
             aria-label="SVG code"
             aria-invalid={!!error}
             aria-describedby={error ? 'paste-error' : undefined}
-            className={`h-48 w-full resize-y rounded-sm border bg-well p-3 font-mono text-xs leading-5 text-foreground placeholder:text-muted-foreground ${error ? 'border-destructive' : 'border-input'
-              }`}
+            className={`h-48 w-full resize-y rounded-sm border bg-well p-3 font-mono text-xs leading-5 text-foreground placeholder:text-muted-foreground ${
+              error ? 'border-destructive' : 'border-input'
+            }`}
           />
           {error && (
             <p id="paste-error" className={FIELD_ERROR} role="alert">
