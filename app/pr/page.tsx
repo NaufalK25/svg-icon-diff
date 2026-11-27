@@ -104,13 +104,12 @@ export default function PrReviewPage() {
 
   useEffect(() => {
     const appTitle = document.title;
-    if (!prRef) return;
-    const file = openPath ? ` ${openPath.split('/').pop()}` : '';
-    document.title = `${appTitle} | ${file}`;
+    if (!openPath) return;
+    document.title = `${appTitle} | ${openPath.split('/').pop()}`;
     return () => {
       document.title = appTitle;
     };
-  }, [prRef, openPath]);
+  }, [openPath]);
 
   const submit = (ref: PrRef) => {
     setInputError(null);
