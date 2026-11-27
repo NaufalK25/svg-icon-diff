@@ -13,7 +13,7 @@ import {
   STATE_COOKIE,
 } from '@/app/api/auth/oauth';
 
-/** Start GitHub sign-in: /api/auth/login?return=/pr?url=…&private=1 */
+/** Start GitHub sign-in: /api/auth/login?return=/pr/owner/repo/123&private=1 */
 export async function GET(request: NextRequest) {
   const { origin, searchParams } = request.nextUrl;
   const returnTo = safeReturnPath(searchParams.get('return'));

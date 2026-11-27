@@ -42,6 +42,8 @@ const NAV = [
   { href: '/pr', label: 'PR review', icon: GitPullRequest },
 ];
 
+const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
 function NavLink({
   href,
   label,
@@ -57,11 +59,10 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative inline-flex items-center gap-1.5 px-2.5 text-sm transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:rounded-full ${
-        active
+      className={`relative inline-flex items-center gap-1.5 px-2.5 text-sm transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:rounded-full ${active
           ? 'font-semibold text-foreground after:bg-mark'
           : 'text-muted-foreground hover:text-foreground hover:after:bg-border'
-      }`}
+        }`}
     >
       <Icon className="h-4 w-4" />
       {label}
@@ -112,7 +113,7 @@ export default function Header({ tokenInputOpen, onTokenInputOpenChange }: Heade
             </Link>
             <nav className="hidden gap-1 self-stretch sm:flex" aria-label="Main">
               {NAV.map(({ href, label, icon: Icon }) => (
-                <NavLink key={href} href={href} label={label} Icon={Icon} active={pathname === href} />
+                <NavLink key={href} href={href} label={label} Icon={Icon} active={isActive(pathname, href)} />
               ))}
             </nav>
           </div>
@@ -174,7 +175,7 @@ export default function Header({ tokenInputOpen, onTokenInputOpenChange }: Heade
         {/* Phones: the two pages get their own row so the header never wraps into an orphan line */}
         <nav className="-mx-1 flex h-10 gap-1 sm:hidden" aria-label="Main">
           {NAV.map(({ href, label, icon: Icon }) => (
-            <NavLink key={href} href={href} label={label} Icon={Icon} active={pathname === href} />
+            <NavLink key={href} href={href} label={label} Icon={Icon} active={isActive(pathname, href)} />
           ))}
         </nav>
 

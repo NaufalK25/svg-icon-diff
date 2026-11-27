@@ -42,11 +42,23 @@ function sortValue(change: PrSvgChange, sort: PrSort): number {
   return -Math.abs(byteSize(change.after) - byteSize(change.before));
 }
 
-// Shareable link: /pr?url=…&file=…
-function prSearch(ref: PrRef, file: string | null): string {
-  const p = new URLSearchParams({ url: prUrl(ref) });
-  if (file) p.set('file', file);
-  return `?${p.toString()}`;
+// Shareable link: /pr/owner/repo/123?file=icons/file_type_x.svg
+function prLocation(ref: PrRef, file: string | null): string {
+  const path = `/pr/${[ref.owner, ref.repo, String(ref.number)].map(encodeURIComponent).join('/')}`;
+  return file ? `${path}?file=${encodeURIComponent(file).replaceAll('%2F', '/')}` : path;
+}
+
+/** The PR named by the location: /pr/owner/repo/123, or the older /pr?url=… links */
+function prFromLocation(): { url: string | null; ref: PrRef | null; file: string | null } {
+  const params = new URLSearchParams(window.location.search);
+  const file = params.get('file');
+  const [owner, repo, number] = window.location.pathname.split('/').slice(2).map(decodeURIComponent);
+  if (owner && repo && number) {
+    const url = `https://github.com/${owner}/${repo}/pull/${number}`;
+    return { url, ref: parsePrUrl(url), file };
+  }
+  const url = params.get('url');
+  return { url, ref: url ? parsePrUrl(url) : null, file };
 }
 
 function sortChanges(changes: PrSvgChange[], sort: PrSort): PrSvgChange[] {
@@ -74,21 +86,23 @@ export default function PrReviewPage() {
     setInputError(message);
     setPrRef(null);
     setOpenPath(null);
-    history.replaceState(null, '', window.location.pathname);
+    history.replaceState(null, '', '/pr');
   }, []);
 
   const applyUrl = useCallback(() => {
-    const p = new URLSearchParams(window.location.search);
-    const url = p.get('url');
-    const ref = url ? parsePrUrl(url) : null;
+    const { url, ref, file } = prFromLocation();
     setInput(url ?? '');
     setInputError(null);
     setPrRef(ref);
-    setOpenPath(ref ? p.get('file') : null);
+    setOpenPath(ref ? file : null);
     if (url && !ref) rejectInput(prInputError(parseIssueUrl(url)));
+    // Older ?url= links switch to the short form
+    else if (ref && new URLSearchParams(window.location.search).has('url')) {
+      history.replaceState(history.state, '', prLocation(ref, file));
+    }
   }, [rejectInput]);
 
-  // The page is prerendered without a URL, so ?url= and ?file= can only be read after hydration
+  // Read after hydration, as the page is rendered the same for every PR
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     applyUrl();
@@ -118,10 +132,10 @@ export default function PrReviewPage() {
     // Same PR again: reload it, e.g. after new commits were pushed
     if (prRef && prUrl(prRef) === prUrl(ref)) {
       pr.reload();
-      history.replaceState(null, '', prSearch(ref, null));
+      history.replaceState(null, '', prLocation(ref, null));
     } else {
       setPrRef(ref);
-      history.pushState(null, '', prSearch(ref, null));
+      history.pushState(null, '', prLocation(ref, null));
     }
   };
 
@@ -131,7 +145,7 @@ export default function PrReviewPage() {
     (path: string, fileDepth: number | undefined) => {
       if (!prRef) return;
       setOpenPath(path);
-      history.pushState({ fileDepth }, '', prSearch(prRef, path));
+      history.pushState({ fileDepth }, '', prLocation(prRef, path));
     },
     [prRef],
   );
@@ -173,7 +187,7 @@ export default function PrReviewPage() {
       return;
     }
     setOpenPath(null);
-    if (prRef) history.replaceState(null, '', prSearch(prRef, null));
+    if (prRef) history.replaceState(null, '', prLocation(prRef, null));
   }, [prRef]);
 
   const lowRateLimit = !token && rateLimit !== null && rateLimit.remaining < LOW_RATE_LIMIT;

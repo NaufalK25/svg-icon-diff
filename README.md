@@ -20,7 +20,7 @@ Drop, pick or paste SVG files, then compare them against a base icon.
 ### PR review (`/pr`)
 
 Paste a pull request link (`https://github.com/owner/repo/pull/123`) to see every added and updated SVG in it. Updated
-icons open in the same comparison view, against the PR's merge base. Links are shareable: `/pr?url=…&file=…`.
+icons open in the same comparison view, against the PR's merge base. Links are shareable: `/pr/owner/repo/123?file=…`.
 
 ### Keyboard shortcuts
 

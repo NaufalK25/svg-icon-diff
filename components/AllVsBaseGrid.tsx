@@ -29,8 +29,8 @@ function VsCard({
       onClick={onClick}
       aria-pressed={active}
       className={`flex flex-col items-start gap-2.5 rounded-md border p-3 text-left transition-colors ${active
-        ? 'border-plate-b bg-plate-b-soft shadow-[inset_0_0_0_1px_var(--plate-b)]'
-        : 'border-border bg-card hover:border-input'
+          ? 'border-plate-b bg-plate-b-soft shadow-[inset_0_0_0_1px_var(--plate-b)]'
+          : 'border-border bg-card hover:border-input'
         }`}
       title={`${base.name} vs ${item.name}`}
     >

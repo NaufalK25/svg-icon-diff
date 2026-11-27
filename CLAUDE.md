@@ -19,7 +19,7 @@ bun dev               # http://localhost:3000, to see a change working
 
 ## Layout
 
-- `app/`: pages (`page.tsx` Compare, `pr/page.tsx` PR review), `globals.css` (all design tokens), `api/auth/` (OAuth).
+- `app/`: pages (`page.tsx` Compare, `pr/[[...pr]]/page.tsx` PR review at `/pr/owner/repo/123`), `globals.css` (all design tokens), `api/auth/` (OAuth).
 - `components/`: UI. `ui.ts` holds the shared class tokens; use them instead of writing classes again.
 - `hooks/`: state and data (`usePullRequest` loads a PR; `useSvgAnalysis`, `usePixelDiff` do the work off the page).
 - `utils/`: pure logic. `githubPr.ts` talks to GitHub, `qualityChecks.ts` scores icons, `pixelDiff.ts` and
