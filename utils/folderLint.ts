@@ -188,16 +188,22 @@ export async function lintFolderOverlay(
 }
 
 export const FOLDER_OVERLAY_MAX = { width: 28, height: 23 };
+/** folder-icon-overlay-position: distance (px) from each edge, and how far it may stray from it */
+export const FOLDER_OVERLAY_MARGINS = {
+  top: { target: 6, tolerance: 14 },
+  right: { target: 2, tolerance: 2 },
+  bottom: { target: 2, tolerance: 4 },
+};
 // Same sampling as the lint: 16 samples per px, with one sample of slack for rasterization
 const OVERLAY_SIZE_SCALE = 16;
 export const OVERLAY_SIZE_TOLERANCE = 1 / OVERLAY_SIZE_SCALE;
 
-/** Rendered width and height (px) of a folder icon's overlay. Null when it has none (or it can't be seen),
- *  undefined for icons that aren't folders or don't parse. */
+/** Rendered box (px, from the top left) of a folder icon's overlay. Null when it has none (or it can't be
+ *  seen), undefined for icons that aren't folders or don't parse. */
 export async function measureFolderOverlay(
   content: string,
   filename: string,
-): Promise<{ width: number; height: number } | null | undefined> {
+): Promise<{ x: number; y: number; width: number; height: number } | null | undefined> {
   if (!folderVariantPath(filename) || typeof document === 'undefined') return undefined;
   const overlay = overlayOf(content, filename.endsWith('_opened.svg'));
   if (!overlay) return undefined;
@@ -216,5 +222,10 @@ export async function measureFolderOverlay(
     }
   }
   if (right < 0) return null;
-  return { width: (right - left + 1) / OVERLAY_SIZE_SCALE, height: (bottom - top + 1) / OVERLAY_SIZE_SCALE };
+  return {
+    x: left / OVERLAY_SIZE_SCALE,
+    y: top / OVERLAY_SIZE_SCALE,
+    width: (right - left + 1) / OVERLAY_SIZE_SCALE,
+    height: (bottom - top + 1) / OVERLAY_SIZE_SCALE,
+  };
 }

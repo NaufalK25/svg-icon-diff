@@ -1,5 +1,6 @@
 import type { SVGMetadata } from '@/types/icon';
 import {
+  FOLDER_OVERLAY_MARGINS,
   FOLDER_OVERLAY_MAX,
   type FolderOverlay,
   folderVariantPath,
@@ -31,6 +32,7 @@ export const QUALITY_CHECKS = [
   { key: 'folder_margins', name: 'Default folder margins', label: 'Folder Margins', short: 'Edges' },
   { key: 'folder_overlay', name: 'Same overlay when opened', label: 'Folder Overlay', short: 'Overlay' },
   { key: 'folder_overlay_size', name: 'Overlay at most 28×23', label: 'Overlay Size', short: 'Ov. size' },
+  { key: 'folder_overlay_position', name: 'Overlay in the corner', label: 'Overlay Position', short: 'Ov. pos' },
   // Guidelines the lint doesn't check
   { key: 'centered', name: 'Centered', label: 'Centered', short: 'Center' },
   { key: 'single_line', name: 'Single line', label: 'Single Line', short: '1 line' },
@@ -179,12 +181,41 @@ export function performQualityChecks(
     const max = FOLDER_OVERLAY_MAX;
     const problems = [
       width > max.width + OVERLAY_SIZE_TOLERANCE &&
-        `Folder overlay icon width exceeds limit (actual ${width}px, expected ${max.width}px)`,
+        `Overlay icon width exceeds limit (actual ${width}px, expected ${max.width}px)`,
       height > max.height + OVERLAY_SIZE_TOLERANCE &&
-        `Folder overlay icon height exceeds limit (actual ${height}px, expected ${max.height}px)`,
+        `Overlay icon height exceeds limit (actual ${height}px, expected ${max.height}px)`,
     ].filter(Boolean);
     if (problems.length === 0) add('folder_overlay_size', 'pass', `Overlay is ${width}×${height}px`);
     else add('folder_overlay_size', 'fail', problems.join('; '));
+  }
+
+  if (overlaySize === undefined) add('folder_overlay_position', 'pass', 'Not a folder icon');
+  else if (overlaySize === null) add('folder_overlay_position', 'pass', 'No overlay');
+  else {
+    const { x, y, width, height } = overlaySize;
+    const margins = { top: y, right: 32 - x - width, bottom: 32 - y - height };
+    const edges = Object.keys(FOLDER_OVERLAY_MARGINS) as (keyof typeof FOLDER_OVERLAY_MARGINS)[];
+    const px = (n: number) => `${Number(n.toFixed(2))}px`;
+    const tooFar = edges.filter(
+      edge => Math.abs(margins[edge] - FOLDER_OVERLAY_MARGINS[edge].target) > FOLDER_OVERLAY_MARGINS[edge].tolerance,
+    );
+    if (tooFar.length === 0)
+      add(
+        'folder_overlay_position',
+        'pass',
+        `${px(margins.right)} from the right, ${px(margins.bottom)} from the bottom, ${px(margins.top)} from the top`,
+      );
+    else
+      add(
+        'folder_overlay_position',
+        'fail',
+        `Overlay icon is too far from the ${tooFar.join(' and ')} edge (${tooFar
+          .map(edge => {
+            const { target, tolerance } = FOLDER_OVERLAY_MARGINS[edge];
+            return `${edge} ${px(margins[edge])}, at most ${target + tolerance}px`;
+          })
+          .join('; ')})`,
+      );
   }
 
   // File size < 2KB (guideline target)
