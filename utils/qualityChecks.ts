@@ -1,4 +1,5 @@
 import type { SVGMetadata } from '@/types/icon';
+import { LINT_FOLDER_ICON, lintFolder } from '@/utils/folderLint';
 import { EXPECTED_VIEWBOX, lintSvg, SVG_NAMESPACE } from '@/utils/svgLint';
 
 /**
@@ -17,8 +18,9 @@ export const QUALITY_CHECKS = [
   { key: 'editor_attrs', name: 'No editor attributes', label: 'No Editor Attributes', short: 'Editor' },
   { key: 'precision', name: 'Numeric precision', label: 'Numeric Precision', short: 'Precision' },
   { key: 'trailing_newline', name: 'Trailing newline', label: 'Trailing Newline', short: 'Newline' },
-  // Guidelines the lint doesn't check
   { key: 'margin', name: '2px margin', label: '2px Margin', short: 'Margin' },
+  { key: 'folder_shape', name: 'Default folder shape', label: 'Folder Shape', short: 'Folder' },
+  // Guidelines the lint doesn't check
   { key: 'centered', name: 'Centered', label: 'Centered', short: 'Center' },
   { key: 'single_line', name: 'Single line', label: 'Single Line', short: '1 line' },
   { key: 'filesize', name: 'Size < 2KB', label: 'File Size < 2KB', short: '< 2KB' },
@@ -120,6 +122,21 @@ export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
     else add('trailing_newline', 'fail', 'Missing a newline at the end of the file');
   }
 
+  const folder = lintFolder(metadata.content, metadata.filename);
+  if (!folder) {
+    add('folder_shape', 'pass', 'Not a folder icon');
+  } else {
+    const problems = [
+      !folder.shapeMatches && `First paths are not the folder from ${folder.template}`,
+      folder.edgeMismatches === null
+        ? 'Folder shape is not visible'
+        : folder.edgeMismatches.length > 0 &&
+          `Edges differ from ${folder.template}: ${folder.edgeMismatches.join(', ')}`,
+    ].filter(Boolean);
+    if (problems.length === 0) add('folder_shape', 'pass', `Same folder shape and edges as ${folder.template}`);
+    else add('folder_shape', 'fail', problems.join('; '));
+  }
+
   // File size < 2KB (guideline target)
   const kb = (n: number) => `${(n / 1024).toFixed(2)} KB`;
   const sizeDetails =
@@ -132,14 +149,15 @@ export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
     add('filesize', 'fail', `${sizeDetails} (excessive)`);
   }
 
-  // 2px margin and centering — folder icons are exempt from both (folder_type_* plus
-  // default_folder* / default_root_folder*, incl. _opened and light_ variants):
-  // they follow the folder shape's fixed layout, not a centered 28×28 area
-  const isFolderIcon = metadata.type === 'folder_type' || /^(light_)?default_(root_)?folder/.test(metadata.filename);
-  if (isFolderIcon) {
-    const na = `Not applicable to folder icons (${metadata.marginDetails})`;
-    add('margin', 'pass', na);
-    add('centered', 'pass', na);
+  // Folder icons follow the default folder's layout: the lint skips their left margin
+  // (the folder starts there), and centering and underflow don't apply
+  const isFolderIcon = LINT_FOLDER_ICON.test(metadata.filename.split('/').pop() ?? '');
+  if (isFolderIcon && metadata.overflowSides) {
+    const overflow = metadata.overflowSides.filter(side => side !== 'left');
+    const note = `left is not checked for folder icons · ${metadata.marginDetails}`;
+    if (overflow.length > 0) add('margin', 'fail', `Overflow ${overflow.join(', ')} (${note})`);
+    else add('margin', 'pass', `OK (${note})`);
+    add('centered', 'pass', `Not applicable to folder icons (${metadata.marginDetails})`);
   } else if (!metadata.overflowSides || !metadata.marginIssues) {
     const unmeasured = `Not measured (${metadata.marginDetails}) — re-analyze this icon`;
     add('margin', 'warning', unmeasured);

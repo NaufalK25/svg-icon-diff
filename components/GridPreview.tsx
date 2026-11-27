@@ -19,7 +19,7 @@ export type GuideKind = 'file' | 'folder';
 // Guide square [x1, y1, x2, y2] in canvas px — circle is inscribed, crosshair at its center
 const GUIDE_BOX: Record<GuideKind, [number, number, number, number]> = {
   file: [2, 2, 30, 30], // 2px margin
-  folder: [10, 10, 31, 31], // folder overlay area
+  folder: [10, 10, 30, 30], // folder overlay badge, 2px from the right and bottom edges
 };
 
 // Base folder shape, from vscode-icons' default_folder.svg — folder_type_* icons
@@ -345,9 +345,8 @@ function GridPreviewModal({
                 grid={grid}
                 guides={guides}
                 kind={kind}
-                className={`max-w-full border border-border ${
-                  items.length > 1 ? 'w-[min(60vh,420px,calc(100vw-7rem))]' : 'w-[min(70vh,620px,calc(100vw-7rem))]'
-                }`}
+                className={`max-w-full border border-border ${items.length > 1 ? 'w-[min(60vh,420px,calc(100vw-7rem))]' : 'w-[min(70vh,620px,calc(100vw-7rem))]'
+                  }`}
               />
             </div>
           ))}
@@ -359,7 +358,7 @@ function GridPreviewModal({
           <span className="text-plate-b">
             {kind === 'file'
               ? 'guide = 2px margin (28×28 content area), centered'
-              : 'solid = base folder outline (default_folder) · dashed = overlay area (10→31)'}
+              : 'solid = base folder outline (default_folder) · dashed = overlay badge (10→30, 2px margin)'}
           </span>
         </p>
       </div>
