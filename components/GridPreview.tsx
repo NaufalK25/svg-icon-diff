@@ -13,7 +13,7 @@ import { BUTTON_ICON, SEGMENT_GROUP, segmentClass, toggleButtonClass } from './u
 export const CANVAS = 32;
 
 /** Which guide set to draw: file icons use the centered 28×28 area, folder
- *  icons the overlay badge area in the bottom-right of the folder shape. */
+ *  icons the overlay badge area in the bottom-right of the folder shape, plus the overlay size limit. */
 export type GuideKind = 'file' | 'folder';
 
 // Guide square [x1, y1, x2, y2] in canvas px — circle is inscribed, crosshair at its center
@@ -21,6 +21,10 @@ const GUIDE_BOX: Record<GuideKind, [number, number, number, number]> = {
   file: [2, 2, 30, 30], // 2px margin
   folder: [10, 10, 30, 30], // folder overlay badge, 2px from the right and bottom edges
 };
+
+// Largest overlay the folder-icon-overlay-size lint allows (28×23), kept inside the 2px margin
+// at the bottom right: [x, y, width, height]
+const FOLDER_OVERLAY_LIMIT = [2, 7, 28, 23] as const;
 
 // Base folder shape, from vscode-icons' default_folder.svg — folder_type_* icons
 // are drawn on top of this outline
@@ -93,6 +97,17 @@ export function GridOverlay({ grid, guides, kind }: { grid: boolean; guides: boo
       {guides && (
         <g style={{ stroke: GUIDE_COLOR }} fill="none">
           {kind === 'folder' && <path d={FOLDER_OUTLINE} strokeOpacity={0.8} {...line} />}
+          {kind === 'folder' && (
+            <rect
+              x={FOLDER_OVERLAY_LIMIT[0]}
+              y={FOLDER_OVERLAY_LIMIT[1]}
+              width={FOLDER_OVERLAY_LIMIT[2]}
+              height={FOLDER_OVERLAY_LIMIT[3]}
+              strokeDasharray="1 2"
+              strokeOpacity={0.8}
+              {...line}
+            />
+          )}
           <rect x={x1} y={y1} width={size} height={size} strokeDasharray="4 3" {...line} />
           <circle cx={cx} cy={cy} r={size / 2} strokeDasharray="4 3" {...line} />
           <line x1={cx - cross} y1={cy} x2={cx + cross} y2={cy} {...line} />
@@ -345,8 +360,9 @@ function GridPreviewModal({
                 grid={grid}
                 guides={guides}
                 kind={kind}
-                className={`max-w-full border border-border ${items.length > 1 ? 'w-[min(60vh,420px,calc(100vw-7rem))]' : 'w-[min(70vh,620px,calc(100vw-7rem))]'
-                  }`}
+                className={`max-w-full border border-border ${
+                  items.length > 1 ? 'w-[min(60vh,420px,calc(100vw-7rem))]' : 'w-[min(70vh,620px,calc(100vw-7rem))]'
+                }`}
               />
             </div>
           ))}
@@ -358,7 +374,7 @@ function GridPreviewModal({
           <span className="text-plate-b">
             {kind === 'file'
               ? 'guide = 2px margin (28×28 content area), centered'
-              : 'solid = base folder outline (default_folder) · dashed = overlay badge (10→30, 2px margin)'}
+              : 'solid = base folder outline (default_folder), dashed = overlay badge (10→30), dotted = largest overlay allowed (28×23), all 2px from the edges'}
           </span>
         </p>
       </div>
