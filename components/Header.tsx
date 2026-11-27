@@ -59,10 +59,11 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative inline-flex items-center gap-1.5 px-2.5 text-sm transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:rounded-full ${active
+      className={`relative inline-flex items-center gap-1.5 px-2.5 text-sm transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:rounded-full ${
+        active
           ? 'font-semibold text-foreground after:bg-mark'
           : 'text-muted-foreground hover:text-foreground hover:after:bg-border'
-        }`}
+      }`}
     >
       <Icon className="h-4 w-4" />
       {label}
@@ -130,16 +131,6 @@ export default function Header({ tokenInputOpen, onTokenInputOpenChange }: Heade
                 /{rateLimitMax}
               </div>
             )}
-            {GITHUB_SIGN_IN_ENABLED && !token && (
-              <button
-                onClick={() => signIn()}
-                className={`${BUTTON_SECONDARY} mr-1 px-2.5`}
-                title="Sign in with GitHub (public repositories; for private ones use the key button)"
-              >
-                <GitHubIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign in</span>
-              </button>
-            )}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className={BUTTON_ICON}
@@ -169,6 +160,16 @@ export default function Header({ tokenInputOpen, onTokenInputOpenChange }: Heade
                 <KeyRound className="h-4 w-4" />
               )}
             </button>
+            {GITHUB_SIGN_IN_ENABLED && !token && (
+              <button
+                onClick={() => signIn()}
+                className={`${BUTTON_SECONDARY} ml-1 px-2.5`}
+                title="Sign in with GitHub (public repositories; for private ones use the key button)"
+              >
+                <GitHubIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign in</span>
+              </button>
+            )}
           </div>
         </div>
 
