@@ -186,3 +186,35 @@ export async function lintFolderOverlay(
   ]);
   return diffPixels(a, b, DEFAULT_THRESHOLD).changed === 0 ? 'match' : 'different';
 }
+
+export const FOLDER_OVERLAY_MAX = { width: 28, height: 23 };
+// Same sampling as the lint: 16 samples per px, with one sample of slack for rasterization
+const OVERLAY_SIZE_SCALE = 16;
+export const OVERLAY_SIZE_TOLERANCE = 1 / OVERLAY_SIZE_SCALE;
+
+/** Rendered width and height (px) of a folder icon's overlay. Null when it has none (or it can't be seen),
+ *  undefined for icons that aren't folders or don't parse. */
+export async function measureFolderOverlay(
+  content: string,
+  filename: string,
+): Promise<{ width: number; height: number } | null | undefined> {
+  if (!folderVariantPath(filename) || typeof document === 'undefined') return undefined;
+  const overlay = overlayOf(content, filename.endsWith('_opened.svg'));
+  if (!overlay) return undefined;
+  if (!overlay.hasOverlay) return null;
+
+  const size = 32 * OVERLAY_SIZE_SCALE;
+  const { data } = await rasterize(overlay.svg, size);
+  let [left, right, top, bottom] = [size, -1, size, -1];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (data[(y * size + x) * 4 + 3] === 0) continue;
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+      top = Math.min(top, y);
+      bottom = Math.max(bottom, y);
+    }
+  }
+  if (right < 0) return null;
+  return { width: (right - left + 1) / OVERLAY_SIZE_SCALE, height: (bottom - top + 1) / OVERLAY_SIZE_SCALE };
+}

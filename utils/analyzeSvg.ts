@@ -1,5 +1,5 @@
 import type { SVGMetadata } from '@/types/icon';
-import { folderVariantPath, lintFolderOverlay } from '@/utils/folderLint';
+import { folderVariantPath, lintFolderOverlay, measureFolderOverlay } from '@/utils/folderLint';
 import { estimateGzipSize } from '@/utils/formatBytes';
 import { parseSVGMetadata } from '@/utils/parseSVG';
 import { calculateQualityScore, performQualityChecks, type QualityCheck } from '@/utils/qualityChecks';
@@ -76,9 +76,10 @@ export function analyzeSvg(content: string, filename: string, variant?: string |
   if (hit) return hit;
 
   const promise = (async () => {
-    const [parsed, overlay] = await Promise.all([
+    const [parsed, overlay, overlaySize] = await Promise.all([
       parseSVGMetadata(content),
       lintFolderOverlay(content, filename, variant).catch(() => 'not-loaded' as const),
+      measureFolderOverlay(content, filename).catch(() => undefined),
     ]);
     const metadata: SVGMetadata = {
       ...parsed,
@@ -89,7 +90,7 @@ export function analyzeSvg(content: string, filename: string, variant?: string |
       path: filename,
       type: guessIconType(filename),
     };
-    const checks = performQualityChecks(metadata, overlay);
+    const checks = performQualityChecks(metadata, { overlay, overlaySize });
     return { metadata, checks, score: calculateQualityScore(checks), externalRefs: findExternalRefs(content) };
   })();
 

@@ -1,5 +1,13 @@
 import type { SVGMetadata } from '@/types/icon';
-import { type FolderOverlay, folderVariantPath, LINT_FOLDER_ICON, lintFolder } from '@/utils/folderLint';
+import {
+  FOLDER_OVERLAY_MAX,
+  type FolderOverlay,
+  folderVariantPath,
+  LINT_FOLDER_ICON,
+  lintFolder,
+  type measureFolderOverlay,
+  OVERLAY_SIZE_TOLERANCE,
+} from '@/utils/folderLint';
 import { EXPECTED_VIEWBOX, lintSvg, SVG_NAMESPACE } from '@/utils/svgLint';
 
 /**
@@ -22,6 +30,7 @@ export const QUALITY_CHECKS = [
   { key: 'folder_shape', name: 'Default folder shape', label: 'Folder Shape', short: 'Folder' },
   { key: 'folder_margins', name: 'Default folder margins', label: 'Folder Margins', short: 'Edges' },
   { key: 'folder_overlay', name: 'Same overlay when opened', label: 'Folder Overlay', short: 'Overlay' },
+  { key: 'folder_overlay_size', name: 'Overlay at most 28×23', label: 'Overlay Size', short: 'Ov. size' },
   // Guidelines the lint doesn't check
   { key: 'centered', name: 'Centered', label: 'Centered', short: 'Center' },
   { key: 'single_line', name: 'Single line', label: 'Single Line', short: '1 line' },
@@ -82,8 +91,16 @@ export function matchesQualityFilter(
   return op === 'and' ? keys.every(matches) : keys.some(matches);
 }
 
-/** `overlay` is the folder overlay rule's result, measured beforehand because it renders both variants */
-export function performQualityChecks(metadata: SVGMetadata, overlay?: FolderOverlay): QualityCheck[] {
+/** Results of the folder overlay rules, measured beforehand because they render the icon */
+export interface FolderRenders {
+  overlay?: FolderOverlay;
+  overlaySize?: Awaited<ReturnType<typeof measureFolderOverlay>>;
+}
+
+export function performQualityChecks(
+  metadata: SVGMetadata,
+  { overlay, overlaySize }: FolderRenders = {},
+): QualityCheck[] {
   const checks: QualityCheck[] = [];
   const add = (key: QualityCheckType, status: QualityCheck['status'], details?: string, countsAsPass?: boolean) =>
     checks.push({ key, name: CHECK_NAMES[key], status, details, ...(countsAsPass && { countsAsPass }) });
@@ -154,6 +171,21 @@ export function performQualityChecks(metadata: SVGMetadata, overlay?: FolderOver
   else if (overlay === 'invisible')
     add('folder_overlay', 'fail', `Folder overlay must be visible here and in ${variant}`);
   else add('folder_overlay', 'fail', `Overlay icon must be identical here and in ${variant}`);
+
+  if (overlaySize === undefined) add('folder_overlay_size', 'pass', 'Not a folder icon');
+  else if (overlaySize === null) add('folder_overlay_size', 'pass', 'No overlay');
+  else {
+    const { width, height } = overlaySize;
+    const max = FOLDER_OVERLAY_MAX;
+    const problems = [
+      width > max.width + OVERLAY_SIZE_TOLERANCE &&
+        `Folder overlay icon width exceeds limit (actual ${width}px, expected ${max.width}px)`,
+      height > max.height + OVERLAY_SIZE_TOLERANCE &&
+        `Folder overlay icon height exceeds limit (actual ${height}px, expected ${max.height}px)`,
+    ].filter(Boolean);
+    if (problems.length === 0) add('folder_overlay_size', 'pass', `Overlay is ${width}×${height}px`);
+    else add('folder_overlay_size', 'fail', problems.join('; '));
+  }
 
   // File size < 2KB (guideline target)
   const kb = (n: number) => `${(n / 1024).toFixed(2)} KB`;
