@@ -1,0 +1,359 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design tokens: "registration plates" (see DESIGN-NOTES.md).
+ * Neutral graphite paper and ink; the two versions under comparison are two print plates,
+ * cyan (A, base, before) and magenta (B, compare, after); one registration mark (yellow / ochre)
+ * for the current tab or page and the focus ring. Every colour used by a component lives here.
+ */
+:root {
+  /* Surfaces */
+  --background: oklch(0.982 0.004 250); /* paper */
+  --card: oklch(1 0 0); /* raised panel */
+  --well: oklch(0.955 0.006 250); /* recessed work area (stage, code) */
+  --muted: oklch(0.935 0.007 252); /* hover fill, skeletons */
+
+  /* Text */
+  --foreground: oklch(0.235 0.014 258); /* ink */
+  --muted-foreground: oklch(0.475 0.016 258); /* graphite */
+
+  /* Lines */
+  --border: oklch(0.885 0.009 252); /* hairline, decorative */
+  --input: oklch(0.64 0.012 255); /* control boundary, 3:1 */
+
+  /* Action: ink, not colour */
+  --primary: oklch(0.235 0.014 258);
+  --primary-foreground: oklch(0.982 0.004 250);
+
+  /* The one sharp accent: registration mark */
+  --mark: oklch(0.6 0.135 72);
+  --ring: oklch(0.6 0.135 72);
+
+  /* Plates: A and B */
+  --plate-a: oklch(0.505 0.105 228);
+  --plate-a-soft: oklch(0.95 0.025 228);
+  --plate-b: oklch(0.53 0.2 355);
+  --plate-b-soft: oklch(0.955 0.025 355);
+  --plate-foreground: oklch(0.982 0.004 250);
+
+  /* State */
+  --success: oklch(0.5 0.12 150);
+  --success-soft: oklch(0.95 0.035 150);
+  --warning: oklch(0.53 0.12 70);
+  --warning-soft: oklch(0.96 0.045 85);
+  --destructive: oklch(0.53 0.19 25);
+  --destructive-soft: oklch(0.955 0.025 25);
+  --merged: oklch(0.5 0.15 305); /* GitHub's merged convention */
+  --merged-soft: oklch(0.95 0.03 305);
+
+  /* Syntax highlighting (SVG/XML) */
+  --code-punct: oklch(0.475 0.016 258);
+  --code-name: oklch(0.47 0.1 228);
+  --code-attr: oklch(0.5 0.11 65);
+  --code-string: oklch(0.3 0.03 258);
+  --code-meta: oklch(0.475 0.016 258);
+  --code-added: oklch(0.5 0.12 150 / 0.12);
+  --code-added-strong: oklch(0.5 0.12 150 / 0.3);
+  --code-removed: oklch(0.53 0.19 25 / 0.1);
+  --code-removed-strong: oklch(0.53 0.19 25 / 0.28);
+
+  /* Elevation: dialogs only */
+  --shadow-overlay: 0 24px 48px -12px oklch(0.235 0.014 258 / 0.28), 0 2px 6px oklch(0.235 0.014 258 / 0.08);
+  --scrim: oklch(0.235 0.014 258 / 0.55);
+
+  /* Scrollbars, selection */
+  --scrollbar: oklch(0.8 0.01 255);
+  --scrollbar-hover: oklch(0.68 0.012 255);
+  --selection: oklch(0.88 0.06 228);
+
+  /*
+   * Preview grounds: fixed in both themes on purpose. They reproduce VS Code's explorer
+   * (#1e1e1e dark, white light) so an icon is judged on the ground it ships on.
+   */
+  --stage-dark: #1e1e1e;
+  --stage-dark-foreground: #ffffff;
+  --stage-light: #ffffff;
+  --stage-light-foreground: #000000;
+  --checker-a: #d4d4d4;
+  --checker-b: #ffffff;
+  /*
+   * Overprint mode: the two versions printed as ink plates on white paper. Hex, because the
+   * canvas reads them; theme-independent like the stage grounds. Cyan = only A, magenta =
+   * only B, ink = both (registered), yellow = both but recoloured.
+   */
+  --overprint-paper: #ffffff;
+  --overprint-both: #1a1e25;
+  --overprint-a: #009fd9;
+  --overprint-b: #e5197e;
+  --overprint-recolor: #f5b800;
+  /* Difference mode: unchanged pixels render black, so the ground must be black too */
+  --diff-ground: #000000;
+  --diff-ground-foreground: #ffffff;
+  --stage-label: oklch(0.15 0.01 258 / 0.72);
+  --stage-label-foreground: #ffffff;
+  /* Drawn over icons on any stage ground, so they stay bright in both themes */
+  --overlay-guide: oklch(0.72 0.19 355); /* plate B, lifted */
+  --overlay-bbox: oklch(0.8 0.13 215); /* plate A, lifted */
+  --overlay-divider: oklch(0.87 0.165 92); /* the mark, at full strength */
+  --overlay-divider-edge: oklch(0.15 0.01 258 / 0.55);
+}
+
+.dark {
+  --background: oklch(0.225 0.01 258);
+  --card: oklch(0.258 0.011 258);
+  --well: oklch(0.195 0.009 258);
+  --muted: oklch(0.3 0.012 258);
+
+  --foreground: oklch(0.945 0.005 250);
+  --muted-foreground: oklch(0.72 0.014 255);
+
+  --border: oklch(0.345 0.013 258);
+  --input: oklch(0.55 0.014 258);
+
+  --primary: oklch(0.945 0.005 250);
+  --primary-foreground: oklch(0.225 0.01 258);
+
+  --mark: oklch(0.87 0.165 92);
+  --ring: oklch(0.87 0.165 92);
+
+  --plate-a: oklch(0.78 0.115 220);
+  --plate-a-soft: oklch(0.3 0.04 225);
+  --plate-b: oklch(0.75 0.165 355);
+  --plate-b-soft: oklch(0.31 0.05 355);
+  --plate-foreground: oklch(0.225 0.01 258);
+
+  --success: oklch(0.78 0.14 152);
+  --success-soft: oklch(0.31 0.045 152);
+  --warning: oklch(0.83 0.13 80);
+  --warning-soft: oklch(0.315 0.045 80);
+  --destructive: oklch(0.73 0.16 22);
+  --destructive-soft: oklch(0.31 0.05 22);
+  --merged: oklch(0.76 0.12 305);
+  --merged-soft: oklch(0.315 0.05 305);
+
+  --code-punct: oklch(0.68 0.014 255);
+  --code-name: oklch(0.8 0.1 220);
+  --code-attr: oklch(0.84 0.11 85);
+  --code-string: oklch(0.88 0.02 250);
+  --code-meta: oklch(0.68 0.014 255);
+  --code-added: oklch(0.78 0.14 152 / 0.12);
+  --code-added-strong: oklch(0.78 0.14 152 / 0.3);
+  --code-removed: oklch(0.73 0.16 22 / 0.12);
+  --code-removed-strong: oklch(0.73 0.16 22 / 0.3);
+
+  --shadow-overlay: 0 24px 48px -12px oklch(0 0 0 / 0.55), 0 2px 6px oklch(0 0 0 / 0.3);
+  --scrim: oklch(0.12 0.008 258 / 0.7);
+
+  --scrollbar: oklch(0.4 0.012 258);
+  --scrollbar-hover: oklch(0.52 0.014 258);
+  --selection: oklch(0.42 0.07 225);
+}
+
+@theme inline {
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-well: var(--well);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-mark: var(--mark);
+  --color-ring: var(--ring);
+  --color-plate-a: var(--plate-a);
+  --color-plate-a-soft: var(--plate-a-soft);
+  --color-plate-b: var(--plate-b);
+  --color-plate-b-soft: var(--plate-b-soft);
+  --color-plate-foreground: var(--plate-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-merged: var(--merged);
+  --color-merged-soft: var(--merged-soft);
+  --color-scrim: var(--scrim);
+  --color-stage-dark: var(--stage-dark);
+  --color-stage-dark-foreground: var(--stage-dark-foreground);
+  --color-stage-light: var(--stage-light);
+  --color-stage-light-foreground: var(--stage-light-foreground);
+  --color-checker-a: var(--checker-a);
+  --color-checker-b: var(--checker-b);
+  --color-overprint-paper: var(--overprint-paper);
+  --color-overprint-both: var(--overprint-both);
+  --color-overprint-a: var(--overprint-a);
+  --color-overprint-b: var(--overprint-b);
+  --color-overprint-recolor: var(--overprint-recolor);
+  --color-diff-ground: var(--diff-ground);
+  --color-diff-ground-foreground: var(--diff-ground-foreground);
+  --color-stage-label: var(--stage-label);
+  --color-stage-label-foreground: var(--stage-label-foreground);
+  --color-overlay-guide: var(--overlay-guide);
+  --color-overlay-bbox: var(--overlay-bbox);
+  --color-overlay-divider: var(--overlay-divider);
+  --color-code-added: var(--code-added);
+  --color-code-added-strong: var(--code-added-strong);
+  --color-code-removed: var(--code-removed);
+  --color-code-removed-strong: var(--code-removed-strong);
+
+  /* Radius by role: controls, panels, dialogs */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-overlay: var(--shadow-overlay);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background font-sans text-foreground;
+    font-optical-sizing: auto;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: var(--selection);
+  }
+  button:not(:disabled),
+  [role='button'],
+  label[for],
+  select,
+  summary {
+    cursor: pointer;
+  }
+
+  /* One focus treatment for every control: the registration mark, offset off the edge */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline-offset: 0;
+  }
+
+  kbd {
+    @apply inline-flex min-w-5 items-center justify-center rounded-sm border border-border bg-card px-1 font-mono text-[11px] leading-4 text-foreground;
+    box-shadow: inset 0 -1px 0 var(--border);
+  }
+
+  input[type='range'] {
+    accent-color: var(--foreground);
+  }
+  input[type='checkbox'] {
+    accent-color: var(--foreground);
+  }
+
+  /* Animations */
+  @keyframes slide-in-from-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-in {
+    animation: fade-in 0.16s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .slide-in-from-right {
+    animation: slide-in-from-right 0.24s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    .animate-in,
+    .slide-in-from-right,
+    .animate-pulse {
+      animation: none;
+    }
+  }
+}
+
+/* ── Global scrollbar — must live outside @layer to override browser defaults ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
+}
+
+/* Hide scrollbar utility (tab strips, mode switcher). Unlayered and after the rule above,
+   or `scrollbar-width: thin` wins and the strip shows a scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Syntax colours, scoped to highlight.js output */
+.hljs-tag,
+.hljs-punctuation {
+  color: var(--code-punct);
+}
+.hljs-name {
+  color: var(--code-name);
+}
+.hljs-attr {
+  color: var(--code-attr);
+}
+.hljs-string {
+  color: var(--code-string);
+}
+.hljs-comment,
+.hljs-meta {
+  color: var(--code-meta);
+}

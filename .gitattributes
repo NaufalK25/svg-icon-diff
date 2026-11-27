@@ -1,0 +1,2 @@
+# Keep LF in the working copy too (matches Prettier's endOfLine), even with core.autocrlf=true
+* text=auto eol=lf
