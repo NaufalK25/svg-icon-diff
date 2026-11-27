@@ -9,7 +9,7 @@ import { highlightLines, HLJS_COLORS } from '@/utils/highlight';
 import { type DiffLine, diffText, markRanges } from '@/utils/textDiff';
 
 import { toggleClass } from './CompareToolbar';
-import { SEGMENT_GROUP, toggleButtonClass } from './ui';
+import { EMPTY_STATE, SEGMENT_GROUP, toggleButtonClass } from './ui';
 
 // Unchanged lines kept around each change; longer unchanged runs fold away
 const CONTEXT = 3;
@@ -157,7 +157,7 @@ export default function CodeDiff({ a, b, labels }: CodeDiffProps) {
       </div>
 
       {diff.added === 0 && diff.removed === 0 ? (
-        <p className="rounded-md border border-dashed border-input bg-well px-4 py-8 text-sm text-muted-foreground">
+        <p className={EMPTY_STATE}>
           {rawEqual
             ? 'The files are identical.'
             : 'Only formatting differs. Turn off Normalize to see the raw changes.'}
@@ -183,28 +183,28 @@ export default function CodeDiff({ a, b, labels }: CodeDiffProps) {
             <tbody>
               {view === 'unified'
                 ? foldContext(diff.lines, l => l.type === 'context', expanded).map((row, i) =>
-                    isFold(row) ? (
-                      foldRow(row, 4)
-                    ) : (
-                      <tr key={i}>
-                        {numCell(row.oldNo)}
-                        {numCell(row.newNo)}
-                        {codeCell(row)}
-                      </tr>
-                    ),
-                  )
+                  isFold(row) ? (
+                    foldRow(row, 4)
+                  ) : (
+                    <tr key={i}>
+                      {numCell(row.oldNo)}
+                      {numCell(row.newNo)}
+                      {codeCell(row)}
+                    </tr>
+                  ),
+                )
                 : foldContext(diff.rows, r => r.left?.type === 'context', expanded).map((row, i) =>
-                    isFold(row) ? (
-                      foldRow(row, 6)
-                    ) : (
-                      <tr key={i}>
-                        {numCell(row.left?.oldNo)}
-                        {codeCell(row.left)}
-                        {numCell(row.right?.newNo)}
-                        {codeCell(row.right)}
-                      </tr>
-                    ),
-                  )}
+                  isFold(row) ? (
+                    foldRow(row, 6)
+                  ) : (
+                    <tr key={i}>
+                      {numCell(row.left?.oldNo)}
+                      {codeCell(row.left)}
+                      {numCell(row.right?.newNo)}
+                      {codeCell(row.right)}
+                    </tr>
+                  ),
+                )}
             </tbody>
           </table>
         </div>

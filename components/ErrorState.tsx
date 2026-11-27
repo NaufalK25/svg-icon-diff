@@ -23,12 +23,12 @@ export default function ErrorState({ title, error, onRetry, onAddToken }: ErrorS
 
   return (
     <div className="py-6" role="alert">
-      <div className="max-w-xl rounded-md border border-destructive/40 bg-destructive-soft p-5 sm:p-6">
+      <div className="rounded-md border border-destructive/40 bg-destructive-soft p-5 sm:p-6">
         <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-destructive">
           <TriangleAlert className="h-5 w-5 shrink-0" />
           {title}
         </h3>
-        <p className="mb-5 break-words font-mono text-sm text-foreground">{error}</p>
+        <p className="mb-5 wrap-break-words font-mono text-sm text-foreground">{error}</p>
 
         {isRateLimited && (
           <div className="mb-5 space-y-2 border-t border-destructive/25 pt-4 text-sm text-foreground">

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAppContext } from '@/context/AppContext';
 import type { PrSvgChange, PullRequestInfo } from '@/types/diff';
-import { createLimiter, fetchFile, fetchPullRequest, type PrRef } from '@/utils/githubPr';
+import { createLimiter, fetchFile, fetchPullRequest, PrInputError, type PrRef } from '@/utils/githubPr';
 import { DEFAULT_THRESHOLD, diffPixels } from '@/utils/pixelDiff';
 import { rasterize } from '@/utils/rasterize';
 
@@ -20,7 +20,10 @@ export interface PullRequestState {
   otherCount: number;
   truncated: boolean;
   loading: boolean;
+  /** Loading failed in a way that trying again may fix (rate limit, network, server) */
   error: string | null;
+  /** The PR can't be reviewed as entered (an issue, or no such PR): a problem with the input */
+  inputError: string | null;
   /** Per-path download errors */
   fileErrors: Record<string, string>;
   /** Fetch a file's contents (and its pixel diff) if not fetched yet; cards call this once visible.
@@ -39,6 +42,7 @@ export function usePullRequest(ref: PrRef | null): PullRequestState {
   const [truncated, setTruncated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [reloadKey, setReloadKey] = useState(0);
   const requested = useRef(new Set<string>());
@@ -60,6 +64,7 @@ export function usePullRequest(ref: PrRef | null): PullRequestState {
     if (!ref) {
       setLoading(false);
       setError(null);
+      setInputError(null);
       setInfo(null);
       setChanges([]);
       setFileErrors({});
@@ -69,6 +74,7 @@ export function usePullRequest(ref: PrRef | null): PullRequestState {
     requested.current = new Set();
     setLoading(true);
     setError(null);
+    setInputError(null);
     setInfo(null);
     setChanges([]);
     setFileErrors({});
@@ -83,7 +89,9 @@ export function usePullRequest(ref: PrRef | null): PullRequestState {
         setTruncated(data.truncated);
       })
       .catch(err => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+        if (cancelled) return;
+        if (err instanceof PrInputError) setInputError(err.message);
+        else setError(err instanceof Error ? err.message : String(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -147,5 +155,17 @@ export function usePullRequest(ref: PrRef | null): PullRequestState {
 
   const reload = useCallback(() => setReloadKey(k => k + 1), []);
 
-  return { info, changes, otherCount, truncated, loading, error, fileErrors, loadFile, fetchBaseFile, reload };
+  return {
+    info,
+    changes,
+    otherCount,
+    truncated,
+    loading,
+    error,
+    inputError,
+    fileErrors,
+    loadFile,
+    fetchBaseFile,
+    reload,
+  };
 }

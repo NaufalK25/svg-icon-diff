@@ -2,19 +2,9 @@
 
 import { GitPullRequest, LoaderCircle } from 'lucide-react';
 
-import { notAPullRequest, parseIssueUrl, parsePrUrl, type PrRef } from '@/utils/githubPr';
+import { parseIssueUrl, parsePrUrl, prInputError, type PrRef } from '@/utils/githubPr';
 
 import { BUTTON_PRIMARY } from './ui';
-
-const FORMATS = 'Use https://github.com/owner/repo/pull/1234 or owner/repo#1234.';
-
-/**
- * The one wording for input problems, whether found here (an issue link, text that isn't a PR)
- * or by GitHub (a short-form number that turns out to be an issue)
- */
-export function prInputError(issue: PrRef | null): string {
-  return `${issue ? notAPullRequest(issue) : 'Not a pull request URL.'} ${FORMATS}`;
-}
 
 interface PrUrlInputProps {
   value: string;
@@ -53,9 +43,8 @@ export default function PrUrlInput({ value, onChange, onSubmit, onInvalid, error
             aria-label="Pull request URL"
             aria-invalid={!!error}
             aria-describedby={error ? 'pr-url-error' : undefined}
-            className={`h-11 w-full rounded-sm border bg-card pl-9 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground ${
-              error ? 'border-destructive' : 'border-input'
-            }`}
+            className={`h-11 w-full rounded-sm border bg-card pl-9 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground ${error ? 'border-destructive' : 'border-input'
+              }`}
           />
         </div>
         <button type="submit" disabled={!value.trim() || loading} className={`${BUTTON_PRIMARY} h-11 px-5 text-base`}>

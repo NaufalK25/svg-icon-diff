@@ -57,6 +57,10 @@ export const NOTICE_WARNING = 'rounded-md border border-warning/40 bg-warning-so
 export const NOTICE_ERROR =
   'rounded-md border border-destructive/40 bg-destructive-soft px-3 py-2 text-sm text-destructive';
 
+/** Nothing to show here (no files, no differences): one look for every empty result */
+export const EMPTY_STATE =
+  'rounded-md border border-dashed border-input bg-well px-4 py-8 text-sm text-muted-foreground';
+
 /** Inline list of hints / shortcuts, separated by hairlines instead of middle dots */
 export const HINT_LIST =
   'flex flex-col gap-y-1 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:[&>li]:px-3 sm:[&>li:first-child]:pl-0 sm:[&>li+li]:border-l sm:[&>li+li]:border-border';

@@ -10,20 +10,27 @@ import PrCaseTabs, { type PrCase, type PrSort } from '@/components/PrCaseTabs';
 import PrFileGrid from '@/components/PrFileGrid';
 import PrFileView from '@/components/PrFileView';
 import PrSummary from '@/components/PrSummary';
-import PrUrlInput, { prInputError } from '@/components/PrUrlInput';
+import PrUrlInput from '@/components/PrUrlInput';
 import SkeletonGrid from '@/components/SkeletonGrid';
-import { NOTICE_WARNING } from '@/components/ui';
+import { EMPTY_STATE, NOTICE_WARNING } from '@/components/ui';
 import { byteSize } from '@/components/UpdatedCard';
 import { GITHUB_SIGN_IN_ENABLED, useAppContext } from '@/context/AppContext';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePullRequest } from '@/hooks/usePullRequest';
 import type { PrSvgChange } from '@/types/diff';
-import { MAX_PR_FILES, notAPullRequest, parseIssueUrl, parsePrUrl, type PrRef, prUrl } from '@/utils/githubPr';
+import { MAX_PR_FILES, parseIssueUrl, parsePrUrl, prInputError, type PrRef, prUrl } from '@/utils/githubPr';
 
 // Below this many API calls left (and no token), suggest adding one before reviews start failing
 const LOW_RATE_LIMIT = 10;
 // Stable empty list, so a hidden section doesn't change the memo dependencies every render
 const NONE: PrSvgChange[] = [];
+
+/** What an empty tab says: the whole PR has none of that kind */
+const EMPTY_MESSAGE: Record<PrCase, string> = {
+  all: 'No added or updated SVG files in this pull request.',
+  added: 'No added SVG files in this pull request.',
+  updated: 'No updated SVG files in this pull request.',
+};
 
 /** Sort key; files whose numbers aren't known yet sort last */
 function sortValue(change: PrSvgChange, sort: PrSort): number {
@@ -51,8 +58,8 @@ export default function PrReviewPage() {
   const [sort, setSort] = useState<PrSort>('path');
   const [thumbSize, setThumbSize] = useLocalStorage<number>('prThumbSize', 32);
   const [tokenInputOpen, setTokenInputOpen] = useState(false);
-  // Problems with what was entered (not a PR link, or an issue number). Shown once, under the
-  // input; load failures go to the error box instead. Never both
+  // Problems with what was entered (not a PR link, an issue, a PR that doesn't exist). Shown once,
+  // under the input; load failures that may pass on retry go to the error box instead. Never both
   const [inputError, setInputError] = useState<string | null>(null);
   const pr = usePullRequest(prRef);
 
@@ -80,12 +87,11 @@ export default function PrReviewPage() {
     }
   }, [rejectInput]);
 
-  // owner/repo#1234 can only be told apart from an issue by asking GitHub: when it answers "issue",
-  // that's an input problem, so it moves under the input like an issue link would
-  const isIssue = !!prRef && pr.error === notAPullRequest(prRef);
+  // Some input problems only GitHub can spot (owner/repo#1234 is an issue, or there's no such PR):
+  // they move under the input like an invalid link would
   useEffect(() => {
-    if (isIssue && prRef) rejectInput(prInputError(prRef));
-  }, [isIssue, prRef, rejectInput]);
+    if (pr.inputError) rejectInput(pr.inputError);
+  }, [pr.inputError, rejectInput]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Shareable link: /pr?url=…&file=…
@@ -172,7 +178,7 @@ export default function PrReviewPage() {
         )}
 
         {/* Results belong to the PR being shown: none while the input is rejected */}
-        {!prRef || isIssue ? null : pr.error ? (
+        {!prRef || pr.inputError ? null : pr.error ? (
           <ErrorState
             title="Error loading pull request"
             error={pr.error}
@@ -200,11 +206,7 @@ export default function PrReviewPage() {
                   SVGs may be missing.
                 </p>
               )}
-              {pr.changes.length === 0 && (
-                <p className="rounded-md border border-dashed border-input bg-well px-4 py-8 text-sm text-muted-foreground">
-                  No added or updated SVG files in this pull request.
-                </p>
-              )}
+              {navChanges.length === 0 && <p className={EMPTY_STATE}>{EMPTY_MESSAGE[filter]}</p>}
               <PrFileGrid
                 title="Added"
                 changes={shownAdded}
