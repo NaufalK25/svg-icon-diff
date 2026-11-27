@@ -4,7 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAppContext } from '@/context/AppContext';
 import type { PrSvgChange, PullRequestInfo } from '@/types/diff';
-import { createLimiter, fetchFile, fetchPullRequest, PrInputError, type PrRef } from '@/utils/githubPr';
+import { folderVariantPath } from '@/utils/folderLint';
+import {
+  createLimiter,
+  fetchFile,
+  fetchPullRequest,
+  FileNotFoundError,
+  PrInputError,
+  type PrRef,
+} from '@/utils/githubPr';
 import { DEFAULT_THRESHOLD, diffPixels } from '@/utils/pixelDiff';
 import { rasterize } from '@/utils/rasterize';
 
@@ -117,14 +125,24 @@ export function usePullRequest(ref: PrRef | null): PullRequestState {
       const update = (patch: Partial<PrSvgChange>) =>
         setChanges(prev => prev.map(c => (c.path === path ? ({ ...c, ...patch } as PrSvgChange) : c)));
 
+      // A folder icon's other variant, for the overlay check; it may be outside the PR. Never rejects
+      const variantOf = (repo: string, sha: string, p: string): Promise<string | null | undefined> => {
+        const variantPath = folderVariantPath(p);
+        if (!variantPath) return Promise.resolve(undefined);
+        return get(repo, sha, variantPath).catch(err => (err instanceof FileNotFoundError ? null : undefined));
+      };
+
       const work = async () => {
+        const afterVariant = variantOf(info.headRepo, info.headSha, path);
         const after = await get(info.headRepo, info.headSha, path);
         if (change.kind === 'added') {
-          update({ after });
+          update({ after, afterVariant: await afterVariant });
           return;
         }
-        const before = await get(baseRepo, info.mergeBaseSha, change.previousPath ?? path);
-        update({ before, after });
+        const beforePath = change.previousPath ?? path;
+        const beforeVariant = variantOf(baseRepo, info.mergeBaseSha, beforePath);
+        const before = await get(baseRepo, info.mergeBaseSha, beforePath);
+        update({ before, after, beforeVariant: await beforeVariant, afterVariant: await afterVariant });
         try {
           const [a, b] = await Promise.all([rasterize(before, BADGE_DIFF_SIZE), rasterize(after, BADGE_DIFF_SIZE)]);
           update({ diff: diffPixels(a, b, DEFAULT_THRESHOLD) });

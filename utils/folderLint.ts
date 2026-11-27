@@ -1,9 +1,22 @@
-// Ports of the folder rules in vscode-icons' svglint config (folder-shape, folder-margins).
+// Ports of the folder rules in vscode-icons' svglint config (folder-shape, folder-margins, folder-icon-overlay).
 // Browser only: geometry is measured on SVG elements attached to the page.
 
+import type { SvgItem } from '@/types/diff';
+import { DEFAULT_THRESHOLD, diffPixels } from '@/utils/pixelDiff';
+import { rasterize } from '@/utils/rasterize';
 import { SVG_NAMESPACE } from '@/utils/svgLint';
 
 export const LINT_FOLDER_ICON = /^(?:folder_type_.+|default_(?:root_)?folder(?:_opened)?)\.svg$/;
+
+/** The other variant (closed ↔ opened) of a folder icon's path, or null for other icons */
+export function folderVariantPath(path: string): string | null {
+  const name = path.split('/').pop() ?? '';
+  if (!LINT_FOLDER_ICON.test(name)) return null;
+  const other = name.endsWith('_opened.svg')
+    ? name.replace(/_opened\.svg$/, '.svg')
+    : name.replace(/\.svg$/, '_opened.svg');
+  return path.slice(0, path.length - name.length) + other;
+}
 
 // vscode-icons' icons/default_folder.svg and default_folder_opened.svg
 const DEFAULT_FOLDER = {
@@ -113,4 +126,63 @@ export function lintFolder(content: string, filename: string): FolderLintResult 
       : null;
 
   return { template: template.name, shapeMatches, edgeMismatches };
+}
+
+/** A folder icon with its other variant taken from the same set, when that set has it */
+export function withFolderVariant(item: SvgItem, items: SvgItem[]): SvgItem {
+  const variantName = folderVariantPath(item.name);
+  if (!variantName) return item;
+  return { ...item, variant: items.find(i => i.name === variantName)?.content };
+}
+
+/**
+ * - `match`, `none`: the same overlay in both variants, or none in either
+ * - `invisible`: only one variant has an overlay, or one of them can't be seen
+ * - `different`: the overlays differ
+ * - `no-variant`: the other variant doesn't exist, so the lint skips the rule
+ * - `not-loaded`: the other variant wasn't available, or one of them doesn't parse
+ */
+export type FolderOverlay = 'match' | 'none' | 'invisible' | 'different' | 'no-variant' | 'not-loaded';
+
+// Overlays are compared as renders; the lint compares resvg's normalized trees
+const OVERLAY_RENDER_SIZE = 128;
+
+function overlayOf(content: string, opened: boolean) {
+  const root = parse(content);
+  if (root.querySelector('parsererror') || root.localName !== 'svg') return null;
+  const folderLength = artworks(parse(DEFAULT_FOLDER[opened ? 'opened' : 'closed'].svg)).length;
+  const elements = artworks(root);
+  elements.slice(0, folderLength).forEach(el => el.remove());
+  const box = measure(root, svg => svg.getBBox());
+  return {
+    hasOverlay: elements.length > folderLength,
+    visible: !!box && (box.width > 0 || box.height > 0),
+    svg: new XMLSerializer().serializeToString(root),
+  };
+}
+
+/** Whether a folder icon and its other variant carry the same overlay. `variant` is that variant's content:
+ *  null when it doesn't exist, undefined when it isn't known. Undefined for icons that aren't folders. */
+export async function lintFolderOverlay(
+  content: string,
+  filename: string,
+  variant: string | null | undefined,
+): Promise<FolderOverlay | undefined> {
+  if (!folderVariantPath(filename) || typeof document === 'undefined') return undefined;
+  if (variant === null) return 'no-variant';
+  if (variant === undefined) return 'not-loaded';
+
+  const opened = filename.endsWith('_opened.svg');
+  const self = overlayOf(content, opened);
+  const other = overlayOf(variant, !opened);
+  if (!self || !other) return 'not-loaded';
+  if (self.hasOverlay !== other.hasOverlay || (self.hasOverlay && (!self.visible || !other.visible))) {
+    return 'invisible';
+  }
+  if (!self.hasOverlay) return 'none';
+  const [a, b] = await Promise.all([
+    rasterize(self.svg, OVERLAY_RENDER_SIZE),
+    rasterize(other.svg, OVERLAY_RENDER_SIZE),
+  ]);
+  return diffPixels(a, b, DEFAULT_THRESHOLD).changed === 0 ? 'match' : 'different';
 }

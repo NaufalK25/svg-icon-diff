@@ -36,8 +36,12 @@ interface UpdatedCardProps {
 export default function UpdatedCard({ change, thumbSize, error, onVisible, onRetry, onOpen }: UpdatedCardProps) {
   const { ref, inView } = useInView<HTMLButtonElement>();
   const name = getFilenameFromPath(change.path);
-  const before = useSvgAnalysis(change.before, getFilenameFromPath(change.previousPath ?? change.path));
-  const after = useSvgAnalysis(change.after, name);
+  const before = useSvgAnalysis(
+    change.before,
+    getFilenameFromPath(change.previousPath ?? change.path),
+    change.beforeVariant,
+  );
+  const after = useSvgAnalysis(change.after, name, change.afterVariant);
 
   useEffect(() => {
     if (inView) onVisible();

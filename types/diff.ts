@@ -9,6 +9,9 @@ export interface SvgItem {
   content: string;
   source: SvgSource;
   metadata?: SVGMetadata;
+  /** The other folder variant's content (closed ↔ opened), for the overlay check:
+   *  null when it doesn't exist, undefined when it isn't known */
+  variant?: string | null;
 }
 
 export type CompareMode = 'swipe' | 'difference' | 'onion' | 'blink' | 'side' | 'overprint';
@@ -24,12 +27,14 @@ export interface PixelDiffResult {
   image: ImageData;
 }
 
-/** The two PR cases. Content fields are null until fetched. */
+/** The two PR cases. Content fields are null until fetched. The variant fields hold a folder icon's
+ *  other variant (closed ↔ opened) on the same side, as in SvgItem.variant. */
 export type PrSvgChange =
   | {
       kind: 'added';
       path: string;
       after: string | null;
+      afterVariant?: string | null;
     }
   | {
       kind: 'updated';
@@ -38,6 +43,8 @@ export type PrSvgChange =
       previousPath?: string;
       before: string | null;
       after: string | null;
+      beforeVariant?: string | null;
+      afterVariant?: string | null;
       diff?: PixelDiffResult;
     };
 

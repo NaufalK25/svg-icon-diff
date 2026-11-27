@@ -1,4 +1,5 @@
 import type { SVGMetadata } from '@/types/icon';
+import { folderVariantPath, lintFolderOverlay } from '@/utils/folderLint';
 import { estimateGzipSize } from '@/utils/formatBytes';
 import { parseSVGMetadata } from '@/utils/parseSVG';
 import { calculateQualityScore, performQualityChecks, type QualityCheck } from '@/utils/qualityChecks';
@@ -57,14 +58,28 @@ export function findExternalRefs(content: string): string[] {
 const cache = new Map<string, Promise<SvgAnalysis>>();
 const MAX_CACHED = 500;
 
-/** Metadata, quality checks and score, as in the explorer's upload checker. Browser only. */
-export function analyzeSvg(content: string, filename: string): Promise<SvgAnalysis> {
-  const key = `${filename}\0${content}`;
+/** Cache key of an analysis; the folder variant only matters to folder icons */
+export function analysisKey(content: string, filename: string, variant?: string | null): string {
+  const other =
+    !folderVariantPath(filename) || variant === undefined ? '' : variant === null ? '\0none' : `\0${variant}`;
+  return `${filename}\0${content}${other}`;
+}
+
+/**
+ * Metadata, quality checks and score, as in the explorer's upload checker. Browser only.
+ * `variant` is the other folder variant's content (closed ↔ opened): null when it doesn't exist,
+ * undefined when it isn't known.
+ */
+export function analyzeSvg(content: string, filename: string, variant?: string | null): Promise<SvgAnalysis> {
+  const key = analysisKey(content, filename, variant);
   const hit = cache.get(key);
   if (hit) return hit;
 
   const promise = (async () => {
-    const parsed = await parseSVGMetadata(content);
+    const [parsed, overlay] = await Promise.all([
+      parseSVGMetadata(content),
+      lintFolderOverlay(content, filename, variant).catch(() => 'not-loaded' as const),
+    ]);
     const metadata: SVGMetadata = {
       ...parsed,
       content,
@@ -74,7 +89,7 @@ export function analyzeSvg(content: string, filename: string): Promise<SvgAnalys
       path: filename,
       type: guessIconType(filename),
     };
-    const checks = performQualityChecks(metadata);
+    const checks = performQualityChecks(metadata, overlay);
     return { metadata, checks, score: calculateQualityScore(checks), externalRefs: findExternalRefs(content) };
   })();
 

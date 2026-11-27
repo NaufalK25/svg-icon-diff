@@ -1,5 +1,5 @@
 import type { SVGMetadata } from '@/types/icon';
-import { LINT_FOLDER_ICON, lintFolder } from '@/utils/folderLint';
+import { type FolderOverlay, folderVariantPath, LINT_FOLDER_ICON, lintFolder } from '@/utils/folderLint';
 import { EXPECTED_VIEWBOX, lintSvg, SVG_NAMESPACE } from '@/utils/svgLint';
 
 /**
@@ -20,6 +20,8 @@ export const QUALITY_CHECKS = [
   { key: 'trailing_newline', name: 'Trailing newline', label: 'Trailing Newline', short: 'Newline' },
   { key: 'margin', name: '2px margin', label: '2px Margin', short: 'Margin' },
   { key: 'folder_shape', name: 'Default folder shape', label: 'Folder Shape', short: 'Folder' },
+  { key: 'folder_margins', name: 'Default folder margins', label: 'Folder Margins', short: 'Edges' },
+  { key: 'folder_overlay', name: 'Same overlay when opened', label: 'Folder Overlay', short: 'Overlay' },
   // Guidelines the lint doesn't check
   { key: 'centered', name: 'Centered', label: 'Centered', short: 'Center' },
   { key: 'single_line', name: 'Single line', label: 'Single Line', short: '1 line' },
@@ -80,7 +82,8 @@ export function matchesQualityFilter(
   return op === 'and' ? keys.every(matches) : keys.some(matches);
 }
 
-export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
+/** `overlay` is the folder overlay rule's result, measured beforehand because it renders both variants */
+export function performQualityChecks(metadata: SVGMetadata, overlay?: FolderOverlay): QualityCheck[] {
   const checks: QualityCheck[] = [];
   const add = (key: QualityCheckType, status: QualityCheck['status'], details?: string, countsAsPass?: boolean) =>
     checks.push({ key, name: CHECK_NAMES[key], status, details, ...(countsAsPass && { countsAsPass }) });
@@ -125,11 +128,32 @@ export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
   const folder = lintFolder(metadata.content, metadata.filename);
   if (!folder) {
     add('folder_shape', 'pass', 'Not a folder icon');
+    add('folder_margins', 'pass', 'Not a folder icon');
   } else {
-    const matches = folder.shapeMatches && folder.edgeMismatches?.length === 0;
-    if (matches) add('folder_shape', 'pass', `Same folder shape as ${folder.template}`);
-    else add('folder_shape', 'fail', `Folder must have the same shape as its default (${folder.template})`);
+    const { template, shapeMatches, edgeMismatches } = folder;
+    if (shapeMatches) add('folder_shape', 'pass', `Same folder shape as ${template}`);
+    else add('folder_shape', 'fail', `Folder must have the same shape as its default (${template})`);
+
+    if (edgeMismatches === null)
+      add('folder_margins', 'fail', 'Folder shape must be visible in the icon and its default');
+    else if (edgeMismatches.length === 0) add('folder_margins', 'pass', `Same margins as ${template}`);
+    else
+      add(
+        'folder_margins',
+        'fail',
+        `Folder shape margins differ from its default (${template}): ${edgeMismatches.join(', ')}`,
+      );
   }
+
+  const variant = folderVariantPath(metadata.filename)?.split('/').pop();
+  if (!variant || !overlay) add('folder_overlay', 'pass', 'Not a folder icon');
+  else if (overlay === 'match') add('folder_overlay', 'pass', `Same overlay as ${variant}`);
+  else if (overlay === 'none') add('folder_overlay', 'pass', `No overlay here or in ${variant}`);
+  else if (overlay === 'no-variant') add('folder_overlay', 'pass', `No ${variant} to compare with`);
+  else if (overlay === 'not-loaded') add('folder_overlay', 'warning', `Not checked: ${variant} not loaded`, true);
+  else if (overlay === 'invisible')
+    add('folder_overlay', 'fail', `Folder overlay must be visible here and in ${variant}`);
+  else add('folder_overlay', 'fail', `Overlay icon must be identical here and in ${variant}`);
 
   // File size < 2KB (guideline target)
   const kb = (n: number) => `${(n / 1024).toFixed(2)} KB`;

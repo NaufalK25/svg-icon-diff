@@ -39,7 +39,7 @@ interface AddedCardProps {
 export default function AddedCard({ change, thumbSize, error, onVisible, onRetry, onOpen }: AddedCardProps) {
   const { ref, inView } = useInView<HTMLButtonElement>();
   const name = getFilenameFromPath(change.path);
-  const analysis = useSvgAnalysis(change.after, name);
+  const analysis = useSvgAnalysis(change.after, name, change.afterVariant);
 
   useEffect(() => {
     if (inView) onVisible();

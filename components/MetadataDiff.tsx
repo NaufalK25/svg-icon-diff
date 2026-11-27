@@ -67,8 +67,8 @@ interface MetadataDiffProps {
 }
 
 export default function MetadataDiff({ a, b, labels }: MetadataDiffProps) {
-  const ra = useSvgAnalysis(a.content, a.name);
-  const rb = useSvgAnalysis(b.content, b.name);
+  const ra = useSvgAnalysis(a.content, a.name, a.variant);
+  const rb = useSvgAnalysis(b.content, b.name, b.variant);
 
   const diff = usePixelDiff(a.content, b.content, BADGE_DIFF_SIZE);
 

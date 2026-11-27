@@ -4,19 +4,18 @@ import React from 'react';
 
 import { CircleCheck, CircleX, TriangleAlert } from 'lucide-react';
 
-import { SVGMetadata } from '@/types/icon';
 import {
   calculateQualityScore,
   getQualityRatio,
   getQualityTier,
   MAX_QUALITY_SCORE,
-  performQualityChecks,
+  type QualityCheck,
 } from '@/utils/qualityChecks';
 
 import { TIER_TEXT } from './AddedCard';
 
 interface QualityChecklistProps {
-  metadata: SVGMetadata;
+  checks: QualityCheck[];
 }
 
 function scoreMessage(allPassed: boolean, score: number): string {
@@ -38,8 +37,7 @@ export const STATUS_ICONS = {
   fail: { icon: CircleX, color: 'text-destructive' },
 } as const;
 
-export default function QualityChecklist({ metadata }: QualityChecklistProps) {
-  const checks = performQualityChecks(metadata);
+export default function QualityChecklist({ checks }: QualityChecklistProps) {
   const score = calculateQualityScore(checks);
   const allPassed = checks.every(c => c.status === 'pass');
 

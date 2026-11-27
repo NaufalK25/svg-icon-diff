@@ -93,10 +93,16 @@ export default function PrFileView({
 
   const baseRepo = `${info.owner}/${info.repo}`;
   const error = fileErrors[path];
-  const asItem = (content: string, side: 'before' | 'after', p: string): SvgItem => ({
+  const asItem = (
+    content: string,
+    side: 'before' | 'after',
+    p: string,
+    variant: string | null | undefined,
+  ): SvgItem => ({
     id: `pr:${side}:${p}`,
     name: getFilenameFromPath(p),
     content,
+    variant,
     source:
       side === 'after'
         ? { kind: 'pr', repo: info.headRepo, ref: info.headSha, path: p }
@@ -112,10 +118,10 @@ export default function PrFileView({
     body = (
       <AddedIconView
         key={path}
-        item={asItem(change.after, 'after', path)}
+        item={asItem(change.after, 'after', path, change.afterVariant)}
         counterpart={
           counterpart?.kind === 'added' && counterpart.after !== null
-            ? asItem(counterpart.after, 'after', counterpart.path)
+            ? asItem(counterpart.after, 'after', counterpart.path, counterpart.afterVariant)
             : null
         }
         candidates={uploads}
@@ -127,8 +133,8 @@ export default function PrFileView({
     body = (
       <CompareView
         key={path}
-        a={asItem(change.before, 'before', change.previousPath ?? path)}
-        b={asItem(change.after, 'after', path)}
+        a={asItem(change.before, 'before', change.previousPath ?? path, change.beforeVariant)}
+        b={asItem(change.after, 'after', path, change.afterVariant)}
         labels={['Before', 'After']}
         mode={mode}
         onModeChange={setMode}

@@ -37,7 +37,7 @@ interface AddedIconViewProps {
 }
 
 export default function AddedIconView({ item, counterpart, candidates = [], fetchBaseFile, dir }: AddedIconViewProps) {
-  const analysis = useSvgAnalysis(item.content, item.name);
+  const analysis = useSvgAnalysis(item.content, item.name, item.variant);
   const [compareWith, setCompareWith] = useState<SvgItem | null>(null);
   const kind = guideKindFor(item.name);
   const [basePath, setBasePath] = useState(
@@ -113,7 +113,7 @@ export default function AddedIconView({ item, counterpart, candidates = [], fetc
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-8">
         <section className="space-y-3">
           <h3 className={SECTION_TITLE}>Quality checks</h3>
-          {metadata ? <QualityChecklist metadata={metadata} /> : <LoadingMessage>Analyzing…</LoadingMessage>}
+          {analysis ? <QualityChecklist checks={analysis.checks} /> : <LoadingMessage>Analyzing…</LoadingMessage>}
         </section>
 
         <section className="space-y-3">

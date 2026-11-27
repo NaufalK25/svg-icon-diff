@@ -16,14 +16,19 @@ import { FIELD_ERROR } from '@/components/ui';
 import { useAppContext } from '@/context/AppContext';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useKeyboard } from '@/hooks/useKeyboard';
+import { withFolderVariant } from '@/utils/folderLint';
 
 export default function ComparePage() {
   const { items, baseId, compareId, addItems, swap, setCompareId } = useAppContext();
   const [errors, setErrors] = useState<string[]>([]);
   const [pasteOpen, setPasteOpen] = useState(false);
 
-  const a = items.find(i => i.id === baseId) ?? null;
-  const b = items.find(i => i.id === compareId) ?? null;
+  const pick = (id: string | null) => {
+    const item = items.find(i => i.id === id);
+    return item ? withFolderVariant(item, items) : null;
+  };
+  const a = pick(baseId);
+  const b = pick(compareId);
 
   useHotkeys({ x: swap });
 
@@ -93,7 +98,7 @@ export default function ComparePage() {
           </>
         )}
 
-        {a && b && <CompareView a={a} b={b} others={items.filter(i => i !== a && i !== b)} />}
+        {a && b && <CompareView a={a} b={b} others={items.filter(i => i.id !== a.id && i.id !== b.id)} />}
 
         <AllVsBaseGrid />
       </main>

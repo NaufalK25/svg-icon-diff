@@ -201,6 +201,9 @@ export function blobUrl(repo: string, sha: string, path: string): string {
   return `https://github.com/${repo}/blob/${sha}/${encodePath(path)}`;
 }
 
+/** The file isn't at that commit (or, without a token, the repo is private) */
+export class FileNotFoundError extends Error {}
+
 /**
  * A file's content at a commit. Tries raw.githubusercontent first (free); a
  * private repo 404s there, so with a token it falls back to the contents API.
@@ -214,7 +217,10 @@ export async function fetchFile(
 ): Promise<string> {
   const res = await fetch(rawUrl(repo, sha, path));
   if (res.ok) return res.text();
-  if (!token) throw new Error(`Failed to fetch ${path}: HTTP ${res.status}`);
+  if (!token) {
+    const Kind = res.status === 404 ? FileNotFoundError : Error;
+    throw new Kind(`Failed to fetch ${path}: HTTP ${res.status}`);
+  }
 
   console.warn(`[fetchFile] raw ${res.status} for ${path}, falling back to the contents API`);
   const api = await fetch(`${API}/repos/${repo}/contents/${encodePath(path)}?ref=${sha}`, {
@@ -222,7 +228,10 @@ export async function fetchFile(
   });
   const limit = rateLimitOf(api);
   if (limit) onRateLimit(limit);
-  if (!api.ok) throw new Error(`Failed to fetch ${path}: GitHub ${api.status}`);
+  if (!api.ok) {
+    const Kind = api.status === 404 ? FileNotFoundError : Error;
+    throw new Kind(`Failed to fetch ${path}: GitHub ${api.status}`);
+  }
   return api.text();
 }
 
