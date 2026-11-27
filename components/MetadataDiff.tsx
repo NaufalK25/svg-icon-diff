@@ -92,7 +92,9 @@ function MetadataTable({ a, b, labels }: { a: SvgAnalysis; b: SvgAnalysis; label
   ];
   const shownCounts = counts.filter(([, k]) => ma[k] || mb[k]);
 
-  const size = (m: typeof ma) => (m.width !== null || m.height !== null ? `${m.width ?? '?'}×${m.height ?? '?'}` : '–');
+  const size = (m: typeof ma) =>
+    m.width !== null || m.height !== null ? `${m.width ?? '?'}×${m.height ?? '?'}` : null;
+  const sizeCell = (m: typeof ma) => size(m) ?? <span className="text-muted-foreground">not set</span>;
 
   const rows: { label: string; a: React.ReactNode; b: React.ReactNode; delta: React.ReactNode }[] = [
     {
@@ -108,9 +110,9 @@ function MetadataTable({ a, b, labels }: { a: SvgAnalysis; b: SvgAnalysis; label
       delta: ma.viewBox === mb.viewBox ? '=' : <span className={WORSE}>changed</span>,
     },
     {
-      label: 'width × height',
-      a: size(ma),
-      b: size(mb),
+      label: 'width × height set',
+      a: sizeCell(ma),
+      b: sizeCell(mb),
       delta: size(ma) === size(mb) ? '=' : <span className={WORSE}>changed</span>,
     },
     {
