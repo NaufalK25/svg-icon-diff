@@ -53,6 +53,9 @@ export const tabClass = (active: boolean) =>
 export const SECTION_TITLE = 'text-sm font-semibold text-foreground';
 export const SECTION_COUNT = 'ml-1.5 font-mono text-xs font-normal tabular-nums text-muted-foreground';
 
+/** A problem with what was typed, dropped or pasted: plain text right under that field */
+export const FIELD_ERROR = 'text-sm text-destructive';
+
 export const NOTICE_WARNING = 'rounded-md border border-warning/40 bg-warning-soft px-3 py-2 text-sm text-foreground';
 export const NOTICE_ERROR =
   'rounded-md border border-destructive/40 bg-destructive-soft px-3 py-2 text-sm text-destructive';

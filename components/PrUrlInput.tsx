@@ -4,7 +4,7 @@ import { GitPullRequest, LoaderCircle } from 'lucide-react';
 
 import { parseIssueUrl, parsePrUrl, prInputError, type PrRef } from '@/utils/githubPr';
 
-import { BUTTON_PRIMARY } from './ui';
+import { BUTTON_PRIMARY, FIELD_ERROR } from './ui';
 
 interface PrUrlInputProps {
   value: string;
@@ -53,7 +53,7 @@ export default function PrUrlInput({ value, onChange, onSubmit, onInvalid, error
         </button>
       </form>
       {error && (
-        <p id="pr-url-error" className="text-sm text-destructive" role="alert">
+        <p id="pr-url-error" className={FIELD_ERROR} role="alert">
           {error}
         </p>
       )}

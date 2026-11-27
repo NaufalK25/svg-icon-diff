@@ -1,13 +1,12 @@
 'use client';
 
-import { LoaderCircle } from 'lucide-react';
-
 import { useSvgAnalysis } from '@/hooks/useSvgAnalysis';
 import type { SvgItem } from '@/types/diff';
 import type { SvgAnalysis } from '@/utils/analyzeSvg';
 import { formatBytes } from '@/utils/formatBytes';
 import { isPassing, MAX_QUALITY_SCORE, QUALITY_CHECKS, type QualityCheck } from '@/utils/qualityChecks';
 
+import LoadingMessage from './LoadingMessage';
 import { STATUS_ICONS } from './QualityChecklist';
 
 const BETTER = 'text-success';
@@ -27,7 +26,7 @@ function Swatches({ colors, highlight }: { colors: string[]; highlight: Set<stri
           title={c}
         >
           {isSwatchable(c) && (
-            <span className="inline-block h-3 w-3 rounded-[2px] border border-border" style={{ backgroundColor: c }} />
+            <span className="inline-block h-3 w-3 rounded-xs border border-border" style={{ backgroundColor: c }} />
           )}
           <span className="font-mono">{c}</span>
         </span>
@@ -69,12 +68,7 @@ export default function MetadataDiff({ a, b, labels }: MetadataDiffProps) {
   const rb = useSvgAnalysis(b.content, b.name);
 
   if (!ra || !rb) {
-    return (
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
-        <LoaderCircle className="h-4 w-4 animate-spin" />
-        Analyzing…
-      </p>
-    );
+    return <LoadingMessage>Analyzing…</LoadingMessage>;
   }
   return <MetadataTable a={ra} b={rb} labels={labels} />;
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { LoaderCircle } from 'lucide-react';
+import LoadingMessage from './LoadingMessage';
 
 interface SkeletonGridProps {
   message: string;
@@ -13,10 +13,7 @@ export default function SkeletonGrid({ message, count = 12 }: SkeletonGridProps)
   return (
     <div className="space-y-5">
       {/* Status message */}
-      <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
-        <LoaderCircle className="h-4 w-4 animate-spin" />
-        {message}
-      </p>
+      <LoadingMessage>{message}</LoadingMessage>
 
       {/* Skeleton grid: the same shape as the file cards it stands in for */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" aria-hidden>

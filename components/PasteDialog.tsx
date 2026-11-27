@@ -8,7 +8,7 @@ import { ClipboardPaste, X } from 'lucide-react';
 import { useBackdropClose } from '@/utils/backdropClose';
 
 import { collectText, type NewSvg } from './DropZone';
-import { BUTTON_ICON, BUTTON_PRIMARY, BUTTON_SECONDARY, INPUT_CLASS, NOTICE_ERROR } from './ui';
+import { BUTTON_ICON, BUTTON_PRIMARY, BUTTON_SECONDARY, FIELD_ERROR, INPUT_CLASS } from './ui';
 
 interface PasteDialogProps {
   onAdd: (items: NewSvg[]) => void;
@@ -73,8 +73,16 @@ export default function PasteDialog({ onAdd, onClose }: PasteDialogProps) {
             placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">…</svg>'
             spellCheck={false}
             aria-label="SVG code"
-            className="h-48 w-full resize-y rounded-sm border border-input bg-well p-3 font-mono text-xs leading-5 text-foreground placeholder:text-muted-foreground"
+            aria-invalid={!!error}
+            aria-describedby={error ? 'paste-error' : undefined}
+            className={`h-48 w-full resize-y rounded-sm border bg-well p-3 font-mono text-xs leading-5 text-foreground placeholder:text-muted-foreground ${error ? 'border-destructive' : 'border-input'
+              }`}
           />
+          {error && (
+            <p id="paste-error" className={FIELD_ERROR} role="alert">
+              {error}
+            </p>
+          )}
           <input
             value={name}
             onChange={e => setName(e.target.value)}
@@ -86,11 +94,6 @@ export default function PasteDialog({ onAdd, onClose }: PasteDialogProps) {
             aria-label="Filename"
             className={`${INPUT_CLASS} w-full font-mono text-xs`}
           />
-          {error && (
-            <p className={NOTICE_ERROR} role="alert">
-              {error}
-            </p>
-          )}
         </div>
         <div className="flex justify-end gap-2 border-t border-border px-4 py-3">
           <button onClick={onClose} className={BUTTON_SECONDARY}>

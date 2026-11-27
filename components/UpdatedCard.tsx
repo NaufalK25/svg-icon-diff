@@ -97,8 +97,8 @@ export default function UpdatedCard({ change, thumbSize, error, onVisible, onRet
                 }
               }}
               className={RETRY_CLASS}
-              title="Retry"
-              aria-label="Retry"
+              title="Try again"
+              aria-label="Try again"
             >
               <RotateCw className="h-3 w-3" />
             </span>

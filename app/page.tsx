@@ -12,7 +12,7 @@ import DropZone from '@/components/DropZone';
 import Header from '@/components/Header';
 import PasteDialog from '@/components/PasteDialog';
 import SvgTray from '@/components/SvgTray';
-import { NOTICE_ERROR } from '@/components/ui';
+import { FIELD_ERROR } from '@/components/ui';
 import { useAppContext } from '@/context/AppContext';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useKeyboard } from '@/hooks/useKeyboard';
@@ -75,7 +75,7 @@ export default function ComparePage() {
         </div>
 
         {errors.length > 0 && (
-          <div className={`space-y-0.5 ${NOTICE_ERROR}`} role="alert">
+          <div className={`space-y-0.5 ${FIELD_ERROR}`} role="alert">
             {errors.map((err, i) => (
               <p key={i}>{err}</p>
             ))}

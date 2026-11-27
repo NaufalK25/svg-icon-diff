@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { ChevronLeft, ChevronRight, ExternalLink, LoaderCircle, RotateCw, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, X } from 'lucide-react';
 
 import { useAppContext } from '@/context/AppContext';
 import { useHotkeys } from '@/hooks/useHotkeys';
@@ -14,8 +14,10 @@ import { blobUrl } from '@/utils/githubPr';
 import AddedIconView from './AddedIconView';
 import { MODES } from './CompareToolbar';
 import CompareView, { type CompareTab } from './CompareView';
+import ErrorState from './ErrorState';
 import { themeCounterpart } from './GridPreview';
-import { BUTTON_ICON, BUTTON_SECONDARY, CHIP, NOTICE_ERROR } from './ui';
+import LoadingMessage from './LoadingMessage';
+import { BUTTON_ICON, CHIP, EMPTY_STATE } from './ui';
 
 const NAV_BUTTON = BUTTON_ICON;
 
@@ -103,17 +105,9 @@ export default function PrFileView({
 
   let body: React.ReactNode;
   if (!change) {
-    body = <p className="text-sm text-muted-foreground">{path} is not an added or updated SVG in this PR.</p>;
+    body = <p className={EMPTY_STATE}>{path} is not an added or updated SVG in this PR.</p>;
   } else if (error) {
-    body = (
-      <div className="space-y-3 text-sm">
-        <p className={NOTICE_ERROR}>{error}</p>
-        <button onClick={() => loadFile(path, true)} className={BUTTON_SECONDARY}>
-          <RotateCw className="h-3.5 w-3.5" />
-          Retry
-        </button>
-      </div>
-    );
+    body = <ErrorState title={`Error loading ${name}`} error={error} onRetry={() => loadFile(path, true)} />;
   } else if (change.kind === 'added' && change.after !== null) {
     body = (
       <AddedIconView
@@ -143,12 +137,7 @@ export default function PrFileView({
       />
     );
   } else {
-    body = (
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
-        <LoaderCircle className="h-4 w-4 animate-spin" />
-        Loading {name}…
-      </p>
-    );
+    body = <LoadingMessage>Loading {name}…</LoadingMessage>;
   }
 
   return createPortal(
@@ -161,15 +150,14 @@ export default function PrFileView({
       <div className="flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-2 sm:px-6">
         {change && (
           <span
-            className={`${CHIP} ${
-              change.kind === 'added' ? 'bg-success-soft text-success' : 'bg-plate-a-soft text-plate-a'
-            }`}
+            className={`${CHIP} ${change.kind === 'added' ? 'bg-success-soft text-success' : 'bg-plate-a-soft text-plate-a'
+              }`}
           >
             {change.kind === 'added' ? 'Added' : 'Updated'}
           </span>
         )}
         <h2
-          className="order-last w-full min-w-0 truncate font-mono text-[15px] font-semibold sm:order-none sm:w-auto sm:flex-1"
+          className="order-last w-full min-w-0 truncate font-mono text-[15px] font-semibold sm:order-0 sm:w-auto sm:flex-1"
           title={path}
         >
           {change?.kind === 'updated' && change.previousPath && (

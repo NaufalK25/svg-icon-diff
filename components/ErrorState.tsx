@@ -28,7 +28,7 @@ export default function ErrorState({ title, error, onRetry, onAddToken }: ErrorS
           <TriangleAlert className="h-5 w-5 shrink-0" />
           {title}
         </h3>
-        <p className="mb-5 wrap-break-words font-mono text-sm text-foreground">{error}</p>
+        <p className="mb-5 wrap-break-word font-mono text-sm text-foreground">{error}</p>
 
         {isRateLimited && (
           <div className="mb-5 space-y-2 border-t border-destructive/25 pt-4 text-sm text-foreground">

@@ -13,9 +13,10 @@ import CodeView from './CodeView';
 import { SELECT_CLASS } from './CompareToolbar';
 import CompareView from './CompareView';
 import { GridPreview, guideKindFor, isLightIcon, svgDataUrl } from './GridPreview';
+import LoadingMessage from './LoadingMessage';
 import QualityChecklist from './QualityChecklist';
 import SizeLadder from './SizeLadder';
-import { BUTTON_PRIMARY, BUTTON_SECONDARY, INPUT_CLASS, SECTION_TITLE } from './ui';
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, FIELD_ERROR, INPUT_CLASS, SECTION_TITLE } from './ui';
 
 const TIER_TEXT: Record<QualityTier, string> = {
   good: 'text-success',
@@ -112,19 +113,14 @@ export default function AddedIconView({ item, counterpart, candidates = [], fetc
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-8">
         <section className="space-y-3">
           <h3 className={SECTION_TITLE}>Quality checks</h3>
-          {metadata ? (
-            <QualityChecklist metadata={metadata} />
-          ) : (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-              Analyzing…
-            </p>
-          )}
+          {metadata ? <QualityChecklist metadata={metadata} /> : <LoadingMessage>Analyzing…</LoadingMessage>}
         </section>
 
         <section className="space-y-3">
           <h3 className={SECTION_TITLE}>Metadata</h3>
-          {metadata && analysis && (
+          {!metadata || !analysis ? (
+            <LoadingMessage>Analyzing…</LoadingMessage>
+          ) : (
             <dl className="divide-y divide-border rounded-md border border-border bg-card px-3 font-mono text-xs [&>div]:py-2">
               {[
                 ['File', item.name],
@@ -151,7 +147,7 @@ export default function AddedIconView({ item, counterpart, candidates = [], fetc
                   {metadata.colors.map(c => (
                     <span key={c} className="inline-flex items-center gap-1" title={c}>
                       <span
-                        className="inline-block h-3 w-3 rounded-[2px] border border-border"
+                        className="inline-block h-3 w-3 rounded-xs border border-border"
                         style={{ backgroundColor: c }}
                       />
                       {c}
@@ -248,7 +244,11 @@ export default function AddedIconView({ item, counterpart, candidates = [], fetc
                 </button>
               </div>
             )}
-            {baseError && <p className="w-full text-destructive">{baseError}</p>}
+            {baseError && (
+              <p className={`w-full ${FIELD_ERROR}`} role="alert">
+                {baseError}
+              </p>
+            )}
           </div>
         </section>
       )}
