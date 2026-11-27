@@ -1,4 +1,5 @@
 import type { SVGMetadata } from '@/types/icon';
+import { EXPECTED_VIEWBOX, lintSvg, SVG_NAMESPACE } from '@/utils/svgLint';
 
 /**
  * Single source of truth for every quality check. Adding or removing an entry
@@ -7,21 +8,39 @@ import type { SVGMetadata } from '@/types/icon';
  * `short` the compact stats label. Every key must be emitted by performQualityChecks.
  */
 export const QUALITY_CHECKS = [
-  { key: 'dimensions', name: '32×32 dimensions', label: '32×32 Dimensions', short: '32×32' },
-  { key: 'viewbox', name: 'ViewBox attribute', label: 'ViewBox', short: 'ViewBox' },
-  { key: 'origin', name: 'Origin at (0, 0)', label: 'Origin at (0,0)', short: 'Origin' },
-  { key: 'filesize', name: 'Size < 2KB', label: 'File Size < 2KB', short: '< 2KB' },
+  // Match vscode-icons' svglint rules (see utils/svgLint.ts): these fail exactly when the lint does
+  { key: 'viewbox', name: 'viewBox 0 0 32 32', label: 'ViewBox', short: 'ViewBox' },
+  { key: 'root_attrs', name: 'Only xmlns and viewBox on <svg>', label: 'Root Attributes', short: 'Root' },
+  { key: 'no_extras', name: 'No comments or metadata', label: 'No Extras', short: 'Extras' },
   { key: 'vector_only', name: 'Vector only', label: 'Vector Only', short: 'Vector' },
+  { key: 'inline_style', name: 'No inline styles', label: 'No Inline Styles', short: 'Style' },
+  { key: 'editor_attrs', name: 'No editor attributes', label: 'No Editor Attributes', short: 'Editor' },
+  { key: 'precision', name: 'Numeric precision', label: 'Numeric Precision', short: 'Precision' },
+  { key: 'trailing_newline', name: 'Trailing newline', label: 'Trailing Newline', short: 'Newline' },
+  // Guidelines the lint doesn't check
   { key: 'margin', name: '2px margin', label: '2px Margin', short: 'Margin' },
   { key: 'centered', name: 'Centered', label: 'Centered', short: 'Center' },
   { key: 'single_line', name: 'Single line', label: 'Single Line', short: '1 line' },
-  { key: 'clean_attrs', name: 'Clean attributes', label: 'Clean Attributes', short: 'Attrs' },
+  { key: 'filesize', name: 'Size < 2KB', label: 'File Size < 2KB', short: '< 2KB' },
+  { key: 'clean_attrs', name: 'No removable attributes', label: 'Clean Attributes', short: 'Attrs' },
 ] as const;
 
 export type QualityCheckType = (typeof QUALITY_CHECKS)[number]['key'];
 
 /** One point per check, so the max score follows the number of checks. */
 export const MAX_QUALITY_SCORE = QUALITY_CHECKS.length;
+
+const LINT_KEYS: QualityCheckType[] = [
+  'viewbox',
+  'root_attrs',
+  'no_extras',
+  'vector_only',
+  'inline_style',
+  'editor_attrs',
+  'precision',
+  'trailing_newline',
+];
+const MAX_LISTED_NUMBERS = 5;
 
 const CHECK_NAMES = Object.fromEntries(QUALITY_CHECKS.map(c => [c.key, c.name])) as Record<QualityCheckType, string>;
 const CHECK_ORDER = new Map<QualityCheckType, number>(QUALITY_CHECKS.map((c, i) => [c.key, i]));
@@ -64,60 +83,41 @@ export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
   const add = (key: QualityCheckType, status: QualityCheck['status'], details?: string, countsAsPass?: boolean) =>
     checks.push({ key, name: CHECK_NAMES[key], status, details, ...(countsAsPass && { countsAsPass }) });
 
-  // 32x32 dimensions (guideline requirement)
-  if (metadata.width === 32 && metadata.height === 32) {
-    add('dimensions', 'pass', 'Explicit dimensions match standard');
-  } else if (metadata.width === null && metadata.height === null) {
-    add('dimensions', 'pass', 'ViewBox-based (implicit 32×32 canvas)');
+  const lint = lintSvg(metadata.content);
+  if (!lint) {
+    for (const key of LINT_KEYS) add(key, 'fail', 'The SVG does not parse');
   } else {
-    add('dimensions', 'fail', `Current: ${metadata.width ?? '?'}×${metadata.height ?? '?'} (incorrect)`);
-  }
+    if (lint.viewBox === EXPECTED_VIEWBOX) add('viewbox', 'pass', lint.viewBox);
+    else
+      add(
+        'viewbox',
+        'fail',
+        lint.viewBox === null ? 'Missing viewBox' : `"${lint.viewBox}" (must be exactly "${EXPECTED_VIEWBOX}")`,
+      );
 
-  // ViewBox present and normalized to "0 0 32 32", and the only thing sizing
-  // the icon — explicit width/height is redundant and only warns.
-  // Parse numerically so "0,0,32,32" and "0.0 0 32 32" pass
-  const vbParts =
-    metadata.viewBox
-      ?.trim()
-      .split(/[\s,]+/)
-      .map(Number) ?? [];
-  const isStandardViewBox =
-    vbParts.length >= 4 && vbParts[0] === 0 && vbParts[1] === 0 && vbParts[2] === 32 && vbParts[3] === 32;
-  const explicitSize = [
-    metadata.width !== null && `width="${metadata.width}"`,
-    metadata.height !== null && `height="${metadata.height}"`,
-  ]
-    .filter(Boolean)
-    .join(' ');
-  if (metadata.viewBox && isStandardViewBox && explicitSize) {
-    add('viewbox', 'warning', `${metadata.viewBox}, but ${explicitSize} is set explicitly (prefer viewBox only)`);
-  } else if (metadata.viewBox && isStandardViewBox) {
-    add('viewbox', 'pass', metadata.viewBox);
-  } else if (metadata.viewBox && explicitSize) {
-    // Explicit size papers over a wrong viewBox — the canvas is still wrong
-    add('viewbox', 'fail', `${metadata.viewBox} with ${explicitSize} (expected viewBox 0 0 32 32)`);
-  } else if (metadata.viewBox) {
-    add('viewbox', 'warning', `${metadata.viewBox} (expected 0 0 32 32)`);
-  } else {
-    add(
-      'viewbox',
-      'fail',
-      explicitSize ? `Missing viewBox, sized only by ${explicitSize} (viewBox required)` : 'Missing viewBox (required)',
-    );
-  }
+    const lintCheck = (key: QualityCheckType, problems: string[], passDetails: string, prefix: string) =>
+      problems.length === 0 ? add(key, 'pass', passDetails) : add(key, 'fail', `${prefix}: ${problems.join(', ')}`);
 
-  // Origin at (0, 0)
-  const originOk = vbParts.length >= 2 && vbParts[0] === 0 && vbParts[1] === 0;
-  if (metadata.viewBox && originOk) {
-    add('origin', 'pass', 'ViewBox correctly positioned');
-  } else {
-    add(
-      'origin',
-      'fail',
-      metadata.viewBox
-        ? `ViewBox must start at origin — got (${vbParts[0]}, ${vbParts[1]})`
-        : 'No viewBox (cannot verify origin)',
+    lintCheck('root_attrs', lint.rootAttributes, `xmlns="${SVG_NAMESPACE}" and viewBox only`, 'Found');
+    lintCheck('no_extras', lint.extras, 'No comments, <title>, <desc>, <metadata>, <script> or empty <defs>', 'Found');
+    lintCheck('vector_only', lint.embedded, 'No embedded or raster images', 'Found');
+    lintCheck(
+      'inline_style',
+      lint.styleProperties,
+      'style="" holds only isolation or mix-blend-mode, if any',
+      'Use presentation attributes instead of style="" for',
     );
+    lintCheck('editor_attrs', lint.editorAttributes, 'No Inkscape, Sodipodi, Illustrator or Sketch data', 'Found');
+    const shown = lint.impreciseNumbers.slice(0, MAX_LISTED_NUMBERS);
+    const more = lint.impreciseNumbers.length - shown.length;
+    lintCheck(
+      'precision',
+      more > 0 ? [...shown, `+${more} more`] : shown,
+      'At most 3 decimals (5 in scale() and matrix())',
+      'Too many decimals',
+    );
+    if (lint.hasTrailingNewline) add('trailing_newline', 'pass', 'Ends with a newline');
+    else add('trailing_newline', 'fail', 'Missing a newline at the end of the file');
   }
 
   // File size < 2KB (guideline target)
@@ -130,13 +130,6 @@ export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
     add('filesize', 'warning', `${sizeDetails} (try to reduce)`);
   } else {
     add('filesize', 'fail', `${sizeDetails} (excessive)`);
-  }
-
-  // No raster images (vector only)
-  if (!metadata.hasRasterImages) {
-    add('vector_only', 'pass', 'Pure SVG graphics');
-  } else {
-    add('vector_only', 'fail', 'Raster <image>/<foreignObject> found (incorrect)');
   }
 
   // 2px margin and centering — folder icons are exempt from both (folder_type_* plus
@@ -173,30 +166,24 @@ export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
     }
   }
 
-  // Single line — must be one line ending with a trailing newline; a missing newline warns,
-  // line breaks inside the content fail
+  // Line breaks before the final newline (that one is the trailing_newline check)
   if (typeof metadata.lineCount !== 'number') {
     add('single_line', 'warning', 'Line count unknown — re-analyze this icon');
   } else if (metadata.lineCount > 1) {
     add('single_line', 'fail', `${metadata.lineCount} lines (more than 1 line)`);
-  } else if (!metadata.hasTrailingNewline) {
-    add('single_line', 'warning', 'Single line, but missing a trailing newline');
   } else {
-    add('single_line', 'pass', 'Single line with a trailing newline');
+    add('single_line', 'pass', 'Single line');
   }
 
-  // Clean attributes — extra attributes on the root <svg> fail; removable ones on
-  // inner elements only warn and still count as a pass
+  // Removable attributes inside the icon only warn and still count as a pass;
+  // the root and editor attributes are root_attrs and editor_attrs
   const unneeded = Array.isArray(metadata.unneededAttributes) ? metadata.unneededAttributes : null;
-  const onRoot = unneeded?.filter(a => a.endsWith(' on <svg>')) ?? [];
   if (!unneeded) {
     add('clean_attrs', 'warning', 'Not checked yet — re-analyze this icon');
   } else if (unneeded.length === 0) {
-    add('clean_attrs', 'pass', '<svg> has only xmlns and viewBox, no removable attributes');
-  } else if (onRoot.length > 0) {
-    add('clean_attrs', 'fail', `Removable: ${unneeded.join(', ')}`);
+    add('clean_attrs', 'pass', 'No removable attributes');
   } else {
-    add('clean_attrs', 'warning', `<svg> is clean, but removable inside: ${unneeded.join(', ')}`, true);
+    add('clean_attrs', 'warning', `Removable: ${unneeded.join(', ')}`, true);
   }
 
   // Keep output in registry order regardless of the order checks run in

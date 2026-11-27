@@ -1,5 +1,6 @@
 import { IconMetadata } from '@/types/icon';
 import { measureRenderedBBox } from '@/utils/svgBBox';
+import { LINT_EDITOR_ATTRIBUTE } from '@/utils/svgLint';
 
 /** Async because margins are measured by rendering the icon to pixels. */
 export async function parseSVGMetadata(svgContent: string): Promise<IconMetadata> {
@@ -208,16 +209,13 @@ export function extractColors(svgContent: string): string[] {
   return Array.from(colors).slice(0, 10);
 }
 
-// The only attributes the root <svg> may carry
-const ROOT_ALLOWED = new Set(['xmlns', 'viewBox']);
-// Editor / exporter leftovers (Inkscape, Sodipodi, Sketch, Affinity Serif)
-const EDITOR_PREFIX = /^(inkscape|sodipodi|sketch|serif):/;
+// Editor leftovers the lint doesn't cover (Affinity Serif); the rest are LINT_EDITOR_ATTRIBUTE
+const EDITOR_PREFIX = /^serif:/;
 
 /**
- * List attributes that are removable or misplaced.
- * The root <svg> may only carry xmlns and viewBox — anything else is flagged,
- * since presentation attributes (fill, xml:space, …) can move to a wrapping <g>.
- * On other elements an attribute is only flagged when it is provably unneeded:
+ * List attributes inside the icon that are removable. The root <svg> and the editor
+ * attributes the lint bans are checked by svgLint.ts instead.
+ * An attribute is only flagged when it is provably unneeded:
  *  - id         → only if nothing references it (url(#id), href="#id", <style>)
  *  - fill-rule  → only the default "nonzero" (evenodd changes rendering)
  *  - clip-rule  → the default "nonzero", or anywhere outside a <clipPath>
@@ -261,14 +259,11 @@ function findUnneededAttributes(svg: Element): string[] {
   // Class names used by the stylesheet (".cls-1" selectors)
   const styledClasses = new Set(Array.from(selectorText.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g), m => m[1]));
 
-  for (const { name } of Array.from(svg.attributes)) {
-    if (!ROOT_ALLOWED.has(name)) flag(`${name} on <svg>`);
-  }
-
   for (const el of elements.slice(1)) {
     const inClipPath = !!el.closest('clipPath');
     for (const { name, value } of Array.from(el.attributes)) {
       const v = value.trim();
+      if (LINT_EDITOR_ATTRIBUTE.test(name)) continue;
       if (name === 'xmlns:xlink') {
         if (!usesXlink) flag('xmlns:xlink (no xlink used)');
       } else if (name.startsWith('xmlns:')) flag(`${name} (editor namespace)`);
