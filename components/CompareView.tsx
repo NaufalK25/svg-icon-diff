@@ -98,9 +98,9 @@ export default function CompareView({
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-wrap items-end gap-x-6 border-b border-border">
+      <div className="flex flex-wrap items-end gap-x-6 border-b border-border sm:flex-nowrap">
         <div
-          className="-mb-px flex overflow-x-auto overflow-y-hidden scrollbar-hide"
+          className="-mb-px flex overflow-x-auto overflow-y-hidden scrollbar-hide sm:shrink-0"
           role="tablist"
           aria-label="Comparison"
         >
@@ -120,18 +120,22 @@ export default function CompareView({
         <p className="ml-auto flex min-w-0 max-w-full items-center gap-2 pb-2.5 text-xs">
           <span className="inline-flex min-w-0 items-center gap-1.5">
             <span className="shrink-0 font-semibold text-plate-a">{labels[0]}</span>
-            <span className="truncate font-mono text-foreground">{a.name}</span>
+            <span className="truncate font-mono text-foreground" title={a.name}>
+              {a.name}
+            </span>
             <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
               {formatContentSize(a.content)}
             </span>
           </span>
-          <span className="text-muted-foreground" aria-hidden>
+          <span className="shrink-0 text-muted-foreground" aria-hidden>
             →
           </span>
           <span className="sr-only">to</span>
           <span className="inline-flex min-w-0 items-center gap-1.5">
             <span className="shrink-0 font-semibold text-plate-b">{labels[1]}</span>
-            <span className="truncate font-mono text-foreground">{b.name}</span>
+            <span className="truncate font-mono text-foreground" title={b.name}>
+              {b.name}
+            </span>
             <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
               {formatContentSize(b.content)}
             </span>
