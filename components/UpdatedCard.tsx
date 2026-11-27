@@ -105,7 +105,8 @@ export default function UpdatedCard({ change, thumbSize, error, onVisible, onRet
             </span>
           </p>
         ) : (
-          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-xs tabular-nums">
+          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-xs tabular-nums">
+            <span className="font-sans text-muted-foreground">Pixel change</span>
             {change.diff ? (
               <span
                 className={`text-sm font-semibold ${change.diff.changed === 0 ? 'text-success' : 'text-foreground'}`}
@@ -115,9 +116,7 @@ export default function UpdatedCard({ change, thumbSize, error, onVisible, onRet
                     : `${change.diff.changed} of ${change.diff.total} pixels changed at 32px`
                 }
               >
-                {change.diff.changed === 0
-                  ? '0% visual change'
-                  : formatChangedPercent(change.diff.changed, change.diff.total)}
+                {formatChangedPercent(change.diff.changed, change.diff.total)}
               </span>
             ) : (
               <span className="text-muted-foreground">…</span>

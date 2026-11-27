@@ -1,9 +1,12 @@
 'use client';
 
+import { usePixelDiff } from '@/hooks/usePixelDiff';
+import { BADGE_DIFF_SIZE } from '@/hooks/usePullRequest';
 import { useSvgAnalysis } from '@/hooks/useSvgAnalysis';
-import type { SvgItem } from '@/types/diff';
+import type { PixelDiffResult, SvgItem } from '@/types/diff';
 import type { SvgAnalysis } from '@/utils/analyzeSvg';
 import { formatBytes } from '@/utils/formatBytes';
+import { formatChangedPercent } from '@/utils/pixelDiff';
 import { isPassing, MAX_QUALITY_SCORE, QUALITY_CHECKS, type QualityCheck } from '@/utils/qualityChecks';
 
 import LoadingMessage from './LoadingMessage';
@@ -67,13 +70,25 @@ export default function MetadataDiff({ a, b, labels }: MetadataDiffProps) {
   const ra = useSvgAnalysis(a.content, a.name);
   const rb = useSvgAnalysis(b.content, b.name);
 
+  const diff = usePixelDiff(a.content, b.content, BADGE_DIFF_SIZE);
+
   if (!ra || !rb) {
     return <LoadingMessage>Analyzing…</LoadingMessage>;
   }
-  return <MetadataTable a={ra} b={rb} labels={labels} />;
+  return <MetadataTable a={ra} b={rb} diff={diff} labels={labels} />;
 }
 
-function MetadataTable({ a, b, labels }: { a: SvgAnalysis; b: SvgAnalysis; labels: [string, string] }) {
+function MetadataTable({
+  a,
+  b,
+  diff,
+  labels,
+}: {
+  a: SvgAnalysis;
+  b: SvgAnalysis;
+  diff: PixelDiffResult | null;
+  labels: [string, string];
+}) {
   const ma = a.metadata;
   const mb = b.metadata;
   const bytes = pctDelta(ma.byteSize, mb.byteSize);
@@ -96,7 +111,26 @@ function MetadataTable({ a, b, labels }: { a: SvgAnalysis; b: SvgAnalysis; label
     m.width !== null || m.height !== null ? `${m.width ?? '?'}×${m.height ?? '?'}` : null;
   const sizeCell = (m: typeof ma) => size(m) ?? <span className="text-muted-foreground">not set</span>;
 
-  const rows: { label: string; a: React.ReactNode; b: React.ReactNode; delta: React.ReactNode }[] = [
+  const rows: { label: string; a: React.ReactNode; b?: React.ReactNode; delta: React.ReactNode }[] = [
+    {
+      label: 'Pixel change',
+      a: diff ? (
+        <span className="text-muted-foreground">
+          {diff.changed === 0
+            ? `No visual change at ${BADGE_DIFF_SIZE}px: only the code changed`
+            : `${diff.changed} of ${diff.total} pixels changed at ${BADGE_DIFF_SIZE}px`}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">…</span>
+      ),
+      delta: diff ? (
+        <span className={diff.changed === 0 ? BETTER : 'text-foreground'}>
+          {formatChangedPercent(diff.changed, diff.total)}
+        </span>
+      ) : (
+        '…'
+      ),
+    },
     {
       label: 'Bytes / gzip',
       a: `${formatBytes(ma.byteSize)} / ${formatBytes(ma.gzipSize)}`,
@@ -185,8 +219,16 @@ function MetadataTable({ a, b, labels }: { a: SvgAnalysis; b: SvgAnalysis; label
           {rows.map(row => (
             <tr key={row.label} className="border-t border-border align-top first:border-t-0">
               <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{row.label}</td>
-              <td className="px-3 py-2">{row.a}</td>
-              <td className="px-3 py-2">{row.b}</td>
+              {row.b === undefined ? (
+                <td colSpan={2} className="px-3 py-2">
+                  {row.a}
+                </td>
+              ) : (
+                <>
+                  <td className="px-3 py-2">{row.a}</td>
+                  <td className="px-3 py-2">{row.b}</td>
+                </>
+              )}
               <td className="whitespace-nowrap px-3 py-2 font-mono text-xs">{row.delta}</td>
             </tr>
           ))}
