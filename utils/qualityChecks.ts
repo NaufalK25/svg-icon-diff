@@ -126,15 +126,9 @@ export function performQualityChecks(metadata: SVGMetadata): QualityCheck[] {
   if (!folder) {
     add('folder_shape', 'pass', 'Not a folder icon');
   } else {
-    const problems = [
-      !folder.shapeMatches && `First paths are not the folder from ${folder.template}`,
-      folder.edgeMismatches === null
-        ? 'Folder shape is not visible'
-        : folder.edgeMismatches.length > 0 &&
-          `Edges differ from ${folder.template}: ${folder.edgeMismatches.join(', ')}`,
-    ].filter(Boolean);
-    if (problems.length === 0) add('folder_shape', 'pass', `Same folder shape and edges as ${folder.template}`);
-    else add('folder_shape', 'fail', problems.join('; '));
+    const matches = folder.shapeMatches && folder.edgeMismatches?.length === 0;
+    if (matches) add('folder_shape', 'pass', `Same folder shape as ${folder.template}`);
+    else add('folder_shape', 'fail', `Folder must have the same shape as its default (${folder.template})`);
   }
 
   // File size < 2KB (guideline target)
