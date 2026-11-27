@@ -1,6 +1,7 @@
 'use client';
 
 import type { SvgItem } from '@/types/diff';
+import { formatContentSize } from '@/utils/formatBytes';
 
 import type { ViewSettings } from './CompareToolbar';
 import { RULER_SIZE } from './GridPreview';
@@ -31,6 +32,7 @@ export default function SideBySideView({ items, settings }: SideBySideViewProps)
               </span>
             )}
             <span className="truncate font-mono text-foreground">{item.name}</span>
+            <span className="shrink-0 font-mono tabular-nums">{formatContentSize(item.content)}</span>
           </p>
           <Stage settings={settings}>
             <IconLayer content={item.content} size={settings.size} alt={item.name} />

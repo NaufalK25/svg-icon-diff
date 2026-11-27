@@ -7,6 +7,7 @@ import { Code, Eye, ListChecks } from 'lucide-react';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import type { CompareMode, SvgItem } from '@/types/diff';
+import { formatContentSize } from '@/utils/formatBytes';
 
 import BlinkView from './BlinkView';
 import CodeDiff from './CodeDiff';
@@ -120,6 +121,9 @@ export default function CompareView({
           <span className="inline-flex min-w-0 items-center gap-1.5">
             <span className="shrink-0 font-semibold text-plate-a">{labels[0]}</span>
             <span className="truncate font-mono text-foreground">{a.name}</span>
+            <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+              {formatContentSize(a.content)}
+            </span>
           </span>
           <span className="text-muted-foreground" aria-hidden>
             →
@@ -128,6 +132,9 @@ export default function CompareView({
           <span className="inline-flex min-w-0 items-center gap-1.5">
             <span className="shrink-0 font-semibold text-plate-b">{labels[1]}</span>
             <span className="truncate font-mono text-foreground">{b.name}</span>
+            <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+              {formatContentSize(b.content)}
+            </span>
           </span>
         </p>
       </div>

@@ -3,6 +3,7 @@
 import { useAppContext } from '@/context/AppContext';
 import { usePixelDiff } from '@/hooks/usePixelDiff';
 import type { SvgItem } from '@/types/diff';
+import { formatContentSize } from '@/utils/formatBytes';
 import { formatChangedPercent } from '@/utils/pixelDiff';
 
 import { svgDataUrl, THEME_PREVIEW_BG } from './GridPreview';
@@ -27,11 +28,10 @@ function VsCard({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`flex flex-col items-start gap-2.5 rounded-md border p-3 text-left transition-colors ${
-        active
-          ? 'border-plate-b bg-plate-b-soft shadow-[inset_0_0_0_1px_var(--plate-b)]'
-          : 'border-border bg-card hover:border-input'
-      }`}
+      className={`flex flex-col items-start gap-2.5 rounded-md border p-3 text-left transition-colors ${active
+        ? 'border-plate-b bg-plate-b-soft shadow-[inset_0_0_0_1px_var(--plate-b)]'
+        : 'border-border bg-card hover:border-input'
+        }`}
       title={`${base.name} vs ${item.name}`}
     >
       <div className={`flex items-center gap-2 rounded-sm border border-border px-2.5 py-2 ${THEME_PREVIEW_BG}`}>
@@ -39,11 +39,13 @@ function VsCard({
         <span className="text-xs text-stage-light-foreground/60 dark:text-stage-dark-foreground/60">vs</span>
         <img src={svgDataUrl(item.content)} alt={item.name} className="h-8 w-8" />
       </div>
-      <span className="w-full truncate font-mono text-xs">{item.name}</span>
+      <span className="flex w-full min-w-0 items-baseline gap-1.5 font-mono text-xs">
+        <span className="truncate">{item.name}</span>
+        <span className="shrink-0 tabular-nums text-muted-foreground">{formatContentSize(item.content)}</span>
+      </span>
       <span
-        className={`font-mono text-lg font-semibold leading-none tabular-nums ${
-          !diff ? 'text-muted-foreground' : diff.changed === 0 ? 'text-success' : 'text-foreground'
-        }`}
+        className={`font-mono text-lg font-semibold leading-none tabular-nums ${!diff ? 'text-muted-foreground' : diff.changed === 0 ? 'text-success' : 'text-foreground'
+          }`}
       >
         {diff ? formatChangedPercent(diff.changed, diff.total) : '…'}
       </span>

@@ -3,7 +3,7 @@
 import { ArrowLeftRight, Trash2, X } from 'lucide-react';
 
 import { useAppContext } from '@/context/AppContext';
-import { formatBytes } from '@/utils/formatBytes';
+import { formatContentSize } from '@/utils/formatBytes';
 
 import { svgDataUrl, THEME_PREVIEW_BG } from './GridPreview';
 import { BUTTON_SMALL, HINT_LIST, SECTION_COUNT, SECTION_TITLE } from './ui';
@@ -55,20 +55,18 @@ export default function SvgTray() {
                 if (e.key === 'Enter') (e.shiftKey ? setBaseId : setCompareId)(item.id);
               }}
               aria-pressed={role === 'B'}
-              className={`group relative flex w-32 shrink-0 flex-col items-center gap-1.5 rounded-md border p-2.5 transition-colors ${
-                role === 'A'
+              className={`group relative flex w-32 shrink-0 flex-col items-center gap-1.5 rounded-md border p-2.5 transition-colors ${role === 'A'
                   ? 'border-plate-a bg-plate-a-soft shadow-[inset_0_0_0_1px_var(--plate-a)]'
                   : role === 'B'
                     ? 'border-plate-b bg-plate-b-soft shadow-[inset_0_0_0_1px_var(--plate-b)]'
                     : 'border-border bg-card hover:border-input'
-              }`}
+                }`}
               title={item.name}
             >
               {role && (
                 <span
-                  className={`absolute left-1.5 top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-sm px-1 font-mono text-xs font-bold text-plate-foreground ${
-                    role === 'A' ? 'bg-plate-a' : 'bg-plate-b'
-                  }`}
+                  className={`absolute left-1.5 top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-sm px-1 font-mono text-xs font-bold text-plate-foreground ${role === 'A' ? 'bg-plate-a' : 'bg-plate-b'
+                    }`}
                 >
                   {role}
                 </span>
@@ -91,7 +89,7 @@ export default function SvgTray() {
               </div>
               <span className="w-full truncate text-center font-mono text-xs">{item.name}</span>
               <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                {formatBytes(new Blob([item.content]).size)}
+                {formatContentSize(item.content)}
               </span>
             </div>
           );

@@ -15,6 +15,10 @@ export function estimateGzipSize(content: string): number {
   return Math.round(byteLength * 0.35); // Assume ~65% compression for text
 }
 
+export function formatContentSize(content: string): string {
+  return formatBytes(new Blob([content]).size);
+}
+
 export function formatFilesize(bytes: number): string {
   return formatBytes(bytes);
 }
