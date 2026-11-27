@@ -42,6 +42,13 @@ function sortValue(change: PrSvgChange, sort: PrSort): number {
   return -Math.abs(byteSize(change.after) - byteSize(change.before));
 }
 
+// Shareable link: /pr?url=…&file=…
+function prSearch(ref: PrRef, file: string | null): string {
+  const p = new URLSearchParams({ url: prUrl(ref) });
+  if (file) p.set('file', file);
+  return `?${p.toString()}`;
+}
+
 function sortChanges(changes: PrSvgChange[], sort: PrSort): PrSvgChange[] {
   const byPath = (a: PrSvgChange, b: PrSvgChange) => a.path.localeCompare(b.path);
   if (sort === 'path') return [...changes].sort(byPath);
@@ -70,20 +77,24 @@ export default function PrReviewPage() {
     history.replaceState(null, '', window.location.pathname);
   }, []);
 
-  // The page is prerendered without a URL, so ?url= and ?file= can only be read after hydration
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
+  const applyUrl = useCallback(() => {
     const p = new URLSearchParams(window.location.search);
     const url = p.get('url');
     const ref = url ? parsePrUrl(url) : null;
-    if (url) setInput(url);
-    if (ref) {
-      setPrRef(ref);
-      setOpenPath(p.get('file'));
-    } else if (url) {
-      rejectInput(prInputError(parseIssueUrl(url)));
-    }
+    setInput(url ?? '');
+    setInputError(null);
+    setPrRef(ref);
+    setOpenPath(ref ? p.get('file') : null);
+    if (url && !ref) rejectInput(prInputError(parseIssueUrl(url)));
   }, [rejectInput]);
+
+  // The page is prerendered without a URL, so ?url= and ?file= can only be read after hydration
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    applyUrl();
+    window.addEventListener('popstate', applyUrl);
+    return () => window.removeEventListener('popstate', applyUrl);
+  }, [applyUrl]);
 
   // Input problems only GitHub can spot, e.g. owner/repo#1234 is an issue
   useEffect(() => {
@@ -91,12 +102,14 @@ export default function PrReviewPage() {
   }, [pr.inputError, rejectInput]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Shareable link: /pr?url=…&file=…
   useEffect(() => {
+    const appTitle = document.title;
     if (!prRef) return;
-    const p = new URLSearchParams({ url: prUrl(prRef) });
-    if (openPath) p.set('file', openPath);
-    history.replaceState(null, '', `?${p.toString()}`);
+    const file = openPath ? ` ${openPath.split('/').pop()}` : '';
+    document.title = `${appTitle} | ${file}`;
+    return () => {
+      document.title = appTitle;
+    };
   }, [prRef, openPath]);
 
   const submit = (ref: PrRef) => {
@@ -104,9 +117,33 @@ export default function PrReviewPage() {
     setOpenPath(null);
     setFilter('all');
     // Same PR again: reload it, e.g. after new commits were pushed
-    if (prRef && prUrl(prRef) === prUrl(ref)) pr.reload();
-    else setPrRef(ref);
+    if (prRef && prUrl(prRef) === prUrl(ref)) {
+      pr.reload();
+      history.replaceState(null, '', prSearch(ref, null));
+    } else {
+      setPrRef(ref);
+      history.pushState(null, '', prSearch(ref, null));
+    }
   };
+
+  // Every file shown gets its own history entry. fileDepth counts the entries back to the grid;
+  // it is absent when no grid lies behind them, as when the file came from a shared link.
+  const showFile = useCallback(
+    (path: string, fileDepth: number | undefined) => {
+      if (!prRef) return;
+      setOpenPath(path);
+      history.pushState({ fileDepth }, '', prSearch(prRef, path));
+    },
+    [prRef],
+  );
+  const openFile = useCallback((path: string) => showFile(path, 1), [showFile]);
+  const stepFile = useCallback(
+    (path: string) => {
+      const depth: number | undefined = history.state?.fileDepth;
+      showFile(path, depth ? depth + 1 : undefined);
+    },
+    [showFile],
+  );
 
   const added = useMemo(
     () =>
@@ -129,7 +166,16 @@ export default function PrReviewPage() {
   // Order on screen, for [ and ] in the file view
   const navChanges = useMemo(() => [...shownAdded, ...shownUpdated], [shownAdded, shownUpdated]);
 
-  const closeFile = useCallback(() => setOpenPath(null), []);
+  // Go back to the grid's own entry, so Forward can reopen the files
+  const closeFile = useCallback(() => {
+    const depth: number | undefined = history.state?.fileDepth;
+    if (depth) {
+      history.go(-depth);
+      return;
+    }
+    setOpenPath(null);
+    if (prRef) history.replaceState(null, '', prSearch(prRef, null));
+  }, [prRef]);
 
   const lowRateLimit = !token && rateLimit !== null && rateLimit.remaining < LOW_RATE_LIMIT;
 
@@ -210,7 +256,7 @@ export default function PrReviewPage() {
                 thumbSize={thumbSize}
                 fileErrors={pr.fileErrors}
                 loadFile={pr.loadFile}
-                onOpen={setOpenPath}
+                onOpen={openFile}
               />
               <PrFileGrid
                 title="Updated"
@@ -218,7 +264,7 @@ export default function PrReviewPage() {
                 thumbSize={thumbSize}
                 fileErrors={pr.fileErrors}
                 loadFile={pr.loadFile}
-                onOpen={setOpenPath}
+                onOpen={openFile}
               />
               {pr.otherCount > 0 && (
                 <p className="border-t border-border pt-4 text-xs text-muted-foreground">
@@ -240,7 +286,7 @@ export default function PrReviewPage() {
           fileErrors={pr.fileErrors}
           loadFile={pr.loadFile}
           fetchBaseFile={pr.fetchBaseFile}
-          onNavigate={setOpenPath}
+          onNavigate={stepFile}
           onClose={closeFile}
         />
       )}
